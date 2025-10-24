@@ -44,6 +44,10 @@ def _generate_code_challenge(verifier):
     return base64.urlsafe_b64encode(digest).decode('utf-8').rstrip('=')
 
 
+def _generate_client_unique_key():
+    return format(secrets.randbits(64), '016x')
+
+
 class TidalAPI(object):
     def __init__(self):
         self.key = LoginKey()
@@ -145,7 +149,8 @@ class TidalAPI(object):
     def __post__(self, path, data, auth=None, urlpre='https://auth.tidal.com/v1/oauth2'):
         for index in range(3):
             try:
-                result = requests.post(urlpre + path, data=data, auth=auth, verify=False).json()
+                url = path if isinstance(path, str) and path.startswith('http') else urlpre + path
+                result = requests.post(url, data=data, auth=auth, verify=False).json()
                 return result
             except Exception as e:
                 if index == 2:
@@ -222,13 +227,17 @@ class TidalAPI(object):
             raise Exception("Current API key does not support PKCE login.")
 
         authorize_url = self.apiKey.get('pkceAuthorizeUrl', 'https://login.tidal.com/authorize')
-        redirect_uri = self.apiKey.get('pkceRedirectUri', 'https://listen.tidal.com/callback')
+        redirect_uri = self.apiKey.get('pkceRedirectUri', 'https://tidal.com/android/login/auth')
+        token_url = self.apiKey.get('pkceTokenUrl')
         scope = self.apiKey.get('pkceScope', 'r_usr+w_usr+w_sub')
 
         verifier = _generate_code_verifier()
         self.key.pkceCodeVerifier = verifier
         self.key.pkceState = secrets.token_urlsafe(32)
         self.key.pkceRedirectUri = redirect_uri
+        self.key.pkceClientUniqueKey = _generate_client_unique_key()
+
+        code_challenge = _generate_code_challenge(verifier)
 
         params = {
             'response_type': 'code',
@@ -236,9 +245,16 @@ class TidalAPI(object):
             'scope': scope,
             'redirect_uri': redirect_uri,
             'state': self.key.pkceState,
-            'code_challenge': _generate_code_challenge(verifier),
-            'code_challenge_method': 'S256'
+            'code_challenge': code_challenge,
+            'code_challenge_method': 'S256',
+            'appMode': self.apiKey.get('pkceAppMode', 'android'),
+            'lang': self.apiKey.get('pkceLang', 'EN'),
+            'restrict_signup': str(self.apiKey.get('pkceRestrictSignup', 'true')).lower(),
+            'client_unique_key': self.key.pkceClientUniqueKey,
         }
+
+        self.key.pkceTokenUrl = token_url
+
         return f"{authorize_url}?{urlencode(params)}"
 
     def completePkceAuthorization(self, redirect_url: str) -> bool:
@@ -258,6 +274,7 @@ class TidalAPI(object):
 
         code = params['code'][0]
         scope = self.apiKey.get('pkceScope', 'r_usr+w_usr+w_sub')
+        client_unique_key = self.key.pkceClientUniqueKey or _generate_client_unique_key()
 
         data = {
             'grant_type': 'authorization_code',
@@ -265,10 +282,15 @@ class TidalAPI(object):
             'code_verifier': self.key.pkceCodeVerifier,
             'redirect_uri': self.key.pkceRedirectUri,
             'code': code,
-            'scope': scope
+            'scope': scope,
+            'client_unique_key': client_unique_key
         }
 
-        result = self.__post__('/token', data, auth=None)
+        token_endpoint = getattr(self.key, 'pkceTokenUrl', None) or self.apiKey.get('pkceTokenUrl')
+        if token_endpoint:
+            result = self.__post__(token_endpoint, data, auth=None)
+        else:
+            result = self.__post__('/token', data, auth=None)
         if 'status' in result and result['status'] != 200:
             message = result.get('userMessage') or result.get('error_description') or 'PKCE authorization failed.'
             raise Exception(message)
@@ -281,6 +303,8 @@ class TidalAPI(object):
         self.key.pkceState = None
         self.key.pkceCodeVerifier = None
         self.key.pkceRedirectUri = None
+        self.key.pkceClientUniqueKey = None
+        self.key.pkceTokenUrl = None
         return True
 
     def loginByAccessToken(self, accessToken, userid=None):

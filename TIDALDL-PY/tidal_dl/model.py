@@ -215,6 +215,8 @@ class LoginKey(aigpy.model.ModelBase):
         self.pkceState = None
         self.pkceCodeVerifier = None
         self.pkceRedirectUri = None
+        self.pkceClientUniqueKey = None
+        self.pkceTokenUrl = None
 
 
 class StreamRespond(aigpy.model.ModelBase):

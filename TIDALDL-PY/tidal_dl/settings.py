@@ -9,6 +9,8 @@
 @Desc    :
 '''
 import json
+from typing import Optional
+
 import aigpy
 import base64
 
@@ -32,6 +34,13 @@ class Settings(aigpy.model.ModelBase):
     listenerEnabled = False
     listenerSecret = "change-this-listener-secret"
     listenerPort = 8123
+    customClientId = None
+    customClientSecret = None
+    customSupportsPkce = None
+    customPkceAuthorizeUrl = None
+    customPkceTokenUrl = None
+    customPkceRedirectUri = None
+    customPkceScope = None
 
     downloadPath = "./download/"
     audioQuality = AudioQuality.Normal
@@ -96,6 +105,14 @@ class Settings(aigpy.model.ModelBase):
         if self.listenerPort <= 0 or self.listenerPort > 65535:
             self.listenerPort = 8123
 
+        if isinstance(self.customSupportsPkce, str):
+            if self.customSupportsPkce.lower() == 'true':
+                self.customSupportsPkce = True
+            elif self.customSupportsPkce.lower() == 'false':
+                self.customSupportsPkce = False
+            else:
+                self.customSupportsPkce = None
+
         LANG.setLang(self.language)
 
     def save(self):
@@ -104,6 +121,26 @@ class Settings(aigpy.model.ModelBase):
         data['videoQuality'] = self.videoQuality.name
         txt = json.dumps(data)
         aigpy.file.write(self._path_, txt, 'w+')
+
+    def apply_api_key_overrides(self, api_key: Optional[dict]) -> dict:
+        combined = dict(api_key or {})
+
+        if self.customClientId:
+            combined['clientId'] = self.customClientId
+        if self.customClientSecret:
+            combined['clientSecret'] = self.customClientSecret
+        if self.customSupportsPkce is not None:
+            combined['supportsPkce'] = self.customSupportsPkce
+        if self.customPkceAuthorizeUrl:
+            combined['pkceAuthorizeUrl'] = self.customPkceAuthorizeUrl
+        if self.customPkceTokenUrl:
+            combined['pkceTokenUrl'] = self.customPkceTokenUrl
+        if self.customPkceRedirectUri:
+            combined['pkceRedirectUri'] = self.customPkceRedirectUri
+        if self.customPkceScope:
+            combined['pkceScope'] = self.customPkceScope
+
+        return combined
 
 
 class TokenSettings(aigpy.model.ModelBase):
