@@ -83,7 +83,7 @@ def mainCommand():
 def main():
     SETTINGS.read(getProfilePath())
     TOKEN.read(getTokenPath())
-    TIDAL_API.apiKey = apiKey.getItem(SETTINGS.apiKeyIndex)
+    updateActiveApiKey()
 
     if len(sys.argv) > 1:
         mainCommand()
@@ -140,6 +140,8 @@ def main():
             loginByPkce()
         elif choice == "9":
             start_listener()
+        elif choice == "10":
+            configureCustomApiSettings()
         else:
             start(choice)
 

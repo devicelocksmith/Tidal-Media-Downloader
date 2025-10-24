@@ -138,6 +138,14 @@ class Printf(object):
             [LANG.select.SETTING_ADD_LRC_FILE, data.lyricFile],
             [LANG.select.SETTING_MULITHREAD_DOWNLOAD, data.multiThread],
             [LANG.select.SETTING_APIKEY, f"[{data.apiKeyIndex}]" + api_key_formats],
+            [LANG.get('SETTING_CUSTOM_CLIENT_ID', 'Custom client ID override'), data.customClientId or ''],
+            [LANG.get('SETTING_CUSTOM_CLIENT_SECRET', 'Custom client secret override'),
+             Printf._mask_listener_secret(data.customClientSecret)],
+            [LANG.get('SETTING_CUSTOM_PKCE_AUTHORIZE_URL', 'Custom PKCE authorize URL'), data.customPkceAuthorizeUrl or ''],
+            [LANG.get('SETTING_CUSTOM_PKCE_TOKEN_URL', 'Custom PKCE token URL'), data.customPkceTokenUrl or ''],
+            [LANG.get('SETTING_CUSTOM_PKCE_REDIRECT_URL', 'Custom PKCE redirect URL'), data.customPkceRedirectUri or ''],
+            [LANG.get('SETTING_CUSTOM_PKCE_SCOPE', 'Custom PKCE scope'), data.customPkceScope or ''],
+            [LANG.get('SETTING_CUSTOM_PKCE_SUPPORTS', 'Override supports PKCE'), data.customSupportsPkce],
             [LANG.select.SETTING_DOWNLOAD_DELAY, data.downloadDelay],
             [LANG.get('SETTING_LISTENER_ENABLED', 'Listener mode enabled'), data.listenerEnabled],
             [LANG.get('SETTING_LISTENER_PORT', 'Listener port'), data.listenerPort],
@@ -159,6 +167,8 @@ class Printf(object):
             [aigpy.cmd.green(LANG.select.CHOICE_ENTER + " '7':"), LANG.select.CHOICE_APIKEY],
             [aigpy.cmd.green(LANG.select.CHOICE_ENTER + " '8':"), LANG.get('CHOICE_PKCE_LOGIN', 'Login via PKCE')],
             [aigpy.cmd.green(LANG.select.CHOICE_ENTER + " '9':"), LANG.get('CHOICE_LISTENER', 'Start listener mode')],
+            [aigpy.cmd.green(LANG.select.CHOICE_ENTER + " '10':"),
+             LANG.get('CHOICE_CUSTOM_API_SETTINGS', 'Configure custom API settings')],
             [aigpy.cmd.green(LANG.select.CHOICE_ENTER_URLID), LANG.select.CHOICE_DOWNLOAD_BY_URL],
         ])
         tb.set_style(prettytable.PLAIN_COLUMNS)

@@ -46,7 +46,8 @@ __KEYS_JSON__ = '''
             "valid": "True",
             "supportsPkce": "True",
             "pkceAuthorizeUrl": "https://login.tidal.com/authorize",
-            "pkceRedirectUri": "https://listen.tidal.com/callback",
+            "pkceRedirectUri": "https://tidal.com/android/login/auth",
+            "pkceTokenUrl": "https://auth.tidal.com/v1/oauth2/token",
             "pkceScope": "r_usr+w_usr+w_sub",
             "from": "morguldir (https://github.com/morguldir/python-tidal/commit/50f1afcd2079efb2b4cf694ef5a7d67fdf619d09)"
         },

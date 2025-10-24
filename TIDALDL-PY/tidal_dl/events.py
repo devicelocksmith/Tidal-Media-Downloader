@@ -220,6 +220,78 @@ def changeSettings():
     SETTINGS.save()
 
 
+def configureCustomApiSettings():
+    Printf.settings()
+    Printf.info(LANG.get('CUSTOM_API_OVERRIDES_INFO',
+                         "Leave blank to keep the current value. Enter '0' to clear an override."))
+
+    def _prompt(prompt_key, default_prompt, current_value, mask_current=False):
+        shown_current = current_value if not mask_current else Printf._mask_listener_secret(current_value)
+        if not shown_current:
+            shown_current = LANG.get('CUSTOM_VALUE_UNSET', 'not set')
+        prompt_text = LANG.get(prompt_key, default_prompt).format(current=shown_current)
+        raw = Printf.enter(prompt_text)
+        if raw == '0':
+            return None
+        if aigpy.string.isNull(raw):
+            return current_value
+        return raw.strip()
+
+    SETTINGS.customClientId = _prompt(
+        'CUSTOM_PROMPT_CLIENT_ID',
+        "Custom client ID override (current: {current}) ('0'-clear):",
+        SETTINGS.customClientId,
+    )
+    SETTINGS.customClientSecret = _prompt(
+        'CUSTOM_PROMPT_CLIENT_SECRET',
+        "Custom client secret override (current: {current}) ('0'-clear):",
+        SETTINGS.customClientSecret,
+        mask_current=True,
+    )
+    SETTINGS.customPkceAuthorizeUrl = _prompt(
+        'CUSTOM_PROMPT_PKCE_AUTHORIZE_URL',
+        "Custom PKCE authorize URL (current: {current}) ('0'-clear):",
+        SETTINGS.customPkceAuthorizeUrl,
+    )
+    SETTINGS.customPkceTokenUrl = _prompt(
+        'CUSTOM_PROMPT_PKCE_TOKEN_URL',
+        "Custom PKCE token URL (current: {current}) ('0'-clear):",
+        SETTINGS.customPkceTokenUrl,
+    )
+    SETTINGS.customPkceRedirectUri = _prompt(
+        'CUSTOM_PROMPT_PKCE_REDIRECT_URL',
+        "Custom PKCE redirect URL (current: {current}) ('0'-clear):",
+        SETTINGS.customPkceRedirectUri,
+    )
+    SETTINGS.customPkceScope = _prompt(
+        'CUSTOM_PROMPT_PKCE_SCOPE',
+        "Custom PKCE scope (current: {current}) ('0'-clear):",
+        SETTINGS.customPkceScope,
+    )
+
+    support_prompt = LANG.get(
+        'CUSTOM_PROMPT_PKCE_SUPPORTS',
+        "Override PKCE support flag (current: {current}) ('0'-clear,'1'-force enable,'2'-force disable):",
+    ).format(current=str(SETTINGS.customSupportsPkce))
+    support_raw = Printf.enter(support_prompt)
+    if support_raw == '0':
+        SETTINGS.customSupportsPkce = None
+    elif support_raw == '1':
+        SETTINGS.customSupportsPkce = True
+    elif support_raw == '2':
+        SETTINGS.customSupportsPkce = False
+    elif support_raw and support_raw.lower() in ('true', 'false'):
+        SETTINGS.customSupportsPkce = support_raw.lower() == 'true'
+
+    SETTINGS.save()
+    updateActiveApiKey()
+    Printf.success(LANG.get('CUSTOM_API_OVERRIDES_SAVED', 'Custom API overrides saved.'))
+
+
+def updateActiveApiKey():
+    TIDAL_API.apiKey = SETTINGS.apply_api_key_overrides(apiKey.getItem(SETTINGS.apiKeyIndex))
+
+
 def changeApiKey():
     item = apiKey.getItem(SETTINGS.apiKeyIndex)
     ver = apiKey.getVersion()
@@ -229,12 +301,12 @@ def changeApiKey():
     Printf.apikeys(apiKey.getItems())
     index = int(Printf.enterLimit("APIKEY index:", LANG.select.MSG_INPUT_ERR, apiKey.getLimitIndexs()))
 
-    if index != SETTINGS.apiKeyIndex:
+    changed = index != SETTINGS.apiKeyIndex
+    if changed:
         SETTINGS.apiKeyIndex = index
         SETTINGS.save()
-        TIDAL_API.apiKey = apiKey.getItem(index)
-        return True
-    return False
+    updateActiveApiKey()
+    return changed
 
 
 '''
