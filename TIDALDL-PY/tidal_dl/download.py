@@ -476,15 +476,41 @@ def downloadCover(album: Optional[Album]) -> None:
         return
 
     cache_key = str(cover_id)
-    if cache_key in _ALBUM_COVER_CACHE:
-        return
+    cover_bytes = _ALBUM_COVER_CACHE.get(cache_key)
 
-    url = TIDAL_API.getCoverUrl(cover_id, "1280", "1280")
-    cover_bytes = _download_cover_bytes(url, album)
     if cover_bytes is None:
-        return
+        url = TIDAL_API.getCoverUrl(cover_id, "1280", "1280")
+        cover_bytes = _download_cover_bytes(url, album)
+        if cover_bytes is None:
+            return
+        _ALBUM_COVER_CACHE[cache_key] = cover_bytes
 
-    _ALBUM_COVER_CACHE[cache_key] = cover_bytes
+    temp_path: Optional[str] = None
+    try:
+        path = getAlbumPath(album)
+        aigpy.path.mkdirs(path)
+        cover_path = Path(path) / "cover.jpg"
+
+        with tempfile.NamedTemporaryFile(prefix="tidaldl-cover-", suffix=".jpg", delete=False) as tmp:
+            tmp.write(cover_bytes)
+            temp_path = tmp.name
+
+        assert temp_path is not None  # for type-checkers
+        _replace_file(temp_path, str(cover_path))
+        temp_path = None
+    except Exception:
+        logging.debug(
+            "Failed to write cover art file for album %s", getattr(album, "id", "unknown"),
+            exc_info=True,
+        )
+    finally:
+        if temp_path is not None:
+            try:
+                os.remove(temp_path)
+            except OSError:
+                logging.debug(
+                    "Failed to clean up temporary cover art file %s", temp_path, exc_info=True
+                )
 
 
 def downloadAlbumInfo(album: Optional[Album], tracks: Iterable[Track]) -> None:
