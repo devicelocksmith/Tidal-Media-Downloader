@@ -75,8 +75,8 @@ PKCE-based authentication lets you log in without storing the TIDAL device clien
 
 1. **Pick a PKCE-capable API key.** Start `tidal-dl`, choose menu option `7` (*Change API Key*), and pick an entry that lists `supportsPkce = True` (the bundled “TV” key is `index 3`). The selected index is stored in `~/.tidal-dl.json` under `apiKeyIndex`, so you can also edit the config file manually if you prefer.
 2. *(Optional)* **Override the API credentials.** Menu option `10` (*Configure custom API settings*) lets you supply your own `clientId`, client secret, and PKCE endpoints/scope. The overrides are saved alongside the rest of the user configuration.
-3. **Begin the PKCE login flow.** From the main menu choose option `8` (*Login via PKCE*). The CLI prints an authorization URL—open it in your browser, approve access, and copy the full redirect URL from the address bar once TIDAL sends you back (it contains the `code` and `state` query parameters).
-4. **Paste the redirect URL into `tidal-dl`.** The downloader exchanges the code for tokens and saves them to `~/.tidal-dl.token.json`. Future sessions reuse the stored refresh token automatically until it expires or you change API keys.
+3. **Begin the PKCE login flow.** From the main menu choose option `8` (*Login via PKCE*). The CLI prints an authorization URL—open it in your browser and approve access. While you wait for the redirect you can either copy the final URL manually or let an automation post it to the temporary endpoint the CLI exposes (it prints something like `http://127.0.0.1:49215/pkce`).
+4. **Provide the redirect URL to `tidal-dl`.** Paste it when prompted or POST the JSON payload from the Chrome extension/bridge script to `/pkce`. The downloader exchanges the code for tokens and saves them to `~/.tidal-dl.token.json`. Future sessions reuse the stored refresh token automatically until it expires or you change API keys.
 
 If your current API key does not support PKCE the CLI falls back to the regular device-code login. Switch keys first or edit `apiKeyIndex` to continue using PKCE.
 
