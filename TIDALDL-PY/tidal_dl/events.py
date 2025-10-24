@@ -9,10 +9,21 @@
 @Desc    :
 """
 
+import contextlib
+import http.server
+import json
 import os
+import queue
+import sys
+import threading
 import time
 
 import aigpy
+
+try:
+    import msvcrt  # type: ignore[attr-defined]
+except ImportError:  # pragma: no cover - not available on POSIX
+    msvcrt = None
 
 from . import apiKey
 from .download import (
@@ -28,7 +39,201 @@ from .lang.language import LANG
 from .model import Album, Artist, Mix, Playlist, Track, Video
 from .printf import Printf
 from .settings import SETTINGS, TOKEN, TokenSettings
+from urllib.parse import urlencode
+
 from .tidal import TIDAL_API
+
+
+def _build_redirect_uri(payload: dict) -> str:
+    """Extract a usable redirect URI from the incoming payload."""
+
+    def _normalize(value):
+        if value is None:
+            return ""
+        return str(value).strip()
+
+    normalized = _normalize(payload.get("normalizedUri"))
+    if normalized:
+        return normalized
+
+    pkce_uri = _normalize(payload.get("pkceUri"))
+    if pkce_uri:
+        return pkce_uri
+
+    scheme = _normalize(payload.get("scheme"))
+    path = _normalize(payload.get("path"))
+    params = payload.get("params")
+    if scheme and path:
+        if isinstance(params, dict) and params:
+            pairs = {}
+            for key, value in params.items():
+                if key is None:
+                    continue
+                pairs[str(key)] = "" if value is None else str(value)
+            query = urlencode(pairs)
+            query = f"?{query}" if query else ""
+        else:
+            query = ""
+
+        path = path.lstrip("/")
+        if path:
+            return f"{scheme}://{path}{query}"
+        return f"{scheme}://{query.lstrip('?')}"
+
+    return ""
+
+
+def _create_pkce_handler(result_queue: "queue.Queue[str]", stop_event: threading.Event):
+    class _PkceHandler(http.server.BaseHTTPRequestHandler):
+        server_version = "TidalPKCE/1.0"
+        sys_version = ""
+
+        def log_message(self, format: str, *args) -> None:  # pragma: no cover - silence default logging
+            return
+
+        def do_POST(self):  # type: ignore[override]
+            if self.path.rstrip("/") != "/pkce":
+                self.send_response(404)
+                self.end_headers()
+                return
+
+            if stop_event.is_set():
+                self.send_response(409)
+                self.end_headers()
+                return
+
+            content_length = self.headers.get("Content-Length")
+            try:
+                length = int(content_length) if content_length else 0
+            except ValueError:
+                length = 0
+
+            body = self.rfile.read(max(length, 0))
+            try:
+                payload = json.loads(body.decode("utf-8")) if body else {}
+            except json.JSONDecodeError:
+                self.send_response(400)
+                self.end_headers()
+                return
+
+            if not isinstance(payload, dict):
+                self.send_response(400)
+                self.end_headers()
+                return
+
+            redirect_uri = _build_redirect_uri(payload)
+            if not redirect_uri:
+                self.send_response(400)
+                self.end_headers()
+                return
+
+            redirect_uri = redirect_uri.strip()
+            if not redirect_uri:
+                self.send_response(400)
+                self.end_headers()
+                return
+
+            if stop_event.is_set():
+                self.send_response(409)
+                self.end_headers()
+                return
+
+            result_queue.put(redirect_uri)
+            stop_event.set()
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"status":"received"}')
+
+            threading.Thread(target=self.server.shutdown, daemon=True).start()
+
+    return _PkceHandler
+
+
+def _start_pkce_server(result_queue: "queue.Queue[str]"):
+    stop_event = threading.Event()
+    ready_event = threading.Event()
+    server_info = {"server": None, "port": None, "error": None, "stop_event": stop_event}
+
+    def _run():
+        handler = _create_pkce_handler(result_queue, stop_event)
+        try:
+            httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        except Exception as exc:  # pragma: no cover - network failures
+            server_info["error"] = exc
+            ready_event.set()
+            return
+
+        httpd.timeout = 0.5
+        server_info["server"] = httpd
+        server_info["port"] = httpd.server_address[1]
+        ready_event.set()
+
+        with contextlib.suppress(Exception):
+            httpd.serve_forever()
+        httpd.server_close()
+
+    thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
+    ready_event.wait()
+    server_info["thread"] = thread
+    return server_info
+
+
+def _stop_pkce_server(server_info: dict) -> None:
+    stop_event = server_info.get("stop_event")
+    if isinstance(stop_event, threading.Event):
+        stop_event.set()
+
+    server = server_info.get("server")
+    if server is not None:
+        with contextlib.suppress(Exception):
+            server.shutdown()
+
+    thread = server_info.get("thread")
+    if isinstance(thread, threading.Thread):
+        thread.join(timeout=1)
+
+
+def _read_user_redirect_input(cancel_event: threading.Event) -> str:
+    prompt = "Redirect URL('0'-Cancel):"
+    aigpy.cmd.colorPrint(prompt, aigpy.cmd.TextColor.Yellow, None)
+    sys.stdout.flush()
+
+    if os.name == 'nt' and msvcrt is not None:
+        buffer = []
+        while not cancel_event.is_set():
+            if msvcrt.kbhit():
+                ch = msvcrt.getwch()
+                if ch in ('\r', '\n'):
+                    print("")
+                    return ''.join(buffer)
+                if ch == '\003':
+                    raise KeyboardInterrupt
+                if ch == '\b':
+                    if buffer:
+                        buffer.pop()
+                        print('\b \b', end='', flush=True)
+                    continue
+                buffer.append(ch)
+                print(ch, end='', flush=True)
+                sys.stdout.flush()
+            else:
+                time.sleep(0.05)
+        return ""
+
+    import select
+
+    while not cancel_event.is_set():
+        try:
+            readable, _, _ = select.select([sys.stdin], [], [], 0.1)
+        except (OSError, ValueError):  # pragma: no cover - defensive
+            readable = []
+        if readable:
+            line = sys.stdin.readline()
+            return line.rstrip('\r\n')
+    return ""
 
 '''
 =================================
@@ -397,14 +602,50 @@ def loginByPkce():
 
     Printf.info('Open the following URL in your browser to authenticate:')
     print(aigpy.cmd.green(authorize_url))
-    Printf.info('After approving access, paste the final redirect URL below.')
+    Printf.info('After approving access, paste the final redirect URL below or send it to the local /pkce endpoint.')
 
-    redirect_url = Printf.enter("Redirect URL('0'-Cancel):")
-    if redirect_url == '0':
+    redirect_queue: "queue.Queue[str]" = queue.Queue()
+    server_info = _start_pkce_server(redirect_queue)
+    server_error = server_info.get('error')
+    if server_error is not None:
+        Printf.info(f"Local /pkce endpoint unavailable: {server_error}. Manual entry only.")
+    else:
+        port = server_info.get('port')
+        if port:
+            Printf.info(f"Listening for redirect callbacks on http://127.0.0.1:{port}/pkce")
+
+    stop_event = server_info.get('stop_event')
+    if not isinstance(stop_event, threading.Event):
+        stop_event = threading.Event()
+        server_info['stop_event'] = stop_event
+
+    try:
+        user_input = _read_user_redirect_input(stop_event)
+    except KeyboardInterrupt:
+        _stop_pkce_server(server_info)
+        raise
+
+    http_redirect = ""
+    with contextlib.suppress(queue.Empty):
+        http_redirect = redirect_queue.get_nowait()
+
+    _stop_pkce_server(server_info)
+
+    redirect_choice = http_redirect.strip() if http_redirect else ""
+    if redirect_choice:
+        Printf.info("Received redirect URL from local endpoint.")
+    else:
+        redirect_choice = (user_input or "").strip()
+
+    if redirect_choice == '0' and not http_redirect:
+        return False
+
+    if not redirect_choice:
+        Printf.err('No redirect URL received.')
         return False
 
     try:
-        TIDAL_API.completePkceAuthorization(redirect_url)
+        TIDAL_API.completePkceAuthorization(redirect_choice)
     except Exception as e:
         Printf.err(str(e))
         return False
