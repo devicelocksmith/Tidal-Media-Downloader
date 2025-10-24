@@ -18,6 +18,7 @@ from typing import Any, Iterable, Optional, Tuple
 import aigpy
 import requests
 
+from .containerfix import ensure_flac_container
 from .coverfix import ensure_flac_cover_art
 from .decryption import decrypt_file, decrypt_security_token
 from .model import Album, Playlist, StreamUrl, Track, Video
@@ -195,6 +196,7 @@ def downloadTrack(
 
         # encrypted -> decrypt and remove encrypted file
         __encrypted__(stream, path + '.part', path)
+        ensure_flac_container(path)
 
         # contributors
         try:
