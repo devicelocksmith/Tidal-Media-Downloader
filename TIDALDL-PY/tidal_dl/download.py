@@ -487,16 +487,36 @@ def downloadCover(album: Optional[Album]) -> None:
 
     temp_path: Optional[str] = None
     try:
-        path = getAlbumPath(album)
-        aigpy.path.mkdirs(path)
-        cover_path = Path(path) / "cover.jpg"
+        album_path = Path(getAlbumPath(album))
+        cover_path = album_path / "cover.jpg"
+        if cover_path.exists():
+            try:
+                cover_path.unlink()
+            except OSError:
+                logging.debug(
+                    "Failed to remove stale cover art file for album %s",
+                    getattr(album, "id", "unknown"),
+                    exc_info=True,
+                )
 
-        with tempfile.NamedTemporaryFile(prefix="tidaldl-cover-", suffix=".jpg", delete=False) as tmp:
+        temp_dir = Path(tempfile.gettempdir()) / "tidal-dl"
+        album_id = getattr(album, "id", None)
+        if album_id:
+            temp_dir = temp_dir / str(album_id)
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        cover_destination = temp_dir / "cover.jpg"
+
+        with tempfile.NamedTemporaryFile(
+            prefix="tidaldl-cover-",
+            suffix=".jpg",
+            delete=False,
+            dir=str(temp_dir),
+        ) as tmp:
             tmp.write(cover_bytes)
             temp_path = tmp.name
 
         assert temp_path is not None  # for type-checkers
-        _replace_file(temp_path, str(cover_path))
+        _replace_file(temp_path, str(cover_destination))
         temp_path = None
     except Exception:
         logging.debug(

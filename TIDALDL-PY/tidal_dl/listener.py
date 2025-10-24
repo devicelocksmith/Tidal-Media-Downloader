@@ -51,8 +51,8 @@ def _get_listener_secret() -> str:
 
 
 def _get_log_path() -> str:
-    download_dir = SETTINGS.downloadPath or "./download"
-    return os.path.join(download_dir, "listener.log")
+    home = os.path.expanduser("~")
+    return os.path.join(home, "tidal-dl-listener.txt")
 
 
 def _append_log_line(line: str) -> None:
