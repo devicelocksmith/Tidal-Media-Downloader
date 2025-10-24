@@ -91,5 +91,9 @@ class Language(object):
             index += 1
         return ','.join(array)
 
+    def get(self, attr, default):
+        """Return a translated string with a graceful fallback."""
+        return getattr(self.select, attr, default)
+
 
 LANG = Language()

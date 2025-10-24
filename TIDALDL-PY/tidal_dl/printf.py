@@ -44,6 +44,15 @@ print_mutex = threading.Lock()
 class Printf(object):
 
     @staticmethod
+    def _mask_listener_secret(secret):
+        if not secret:
+            return ""
+        secret = str(secret)
+        if len(secret) <= 4:
+            return "*" * len(secret)
+        return "*" * (len(secret) - 4) + secret[-4:]
+
+    @staticmethod
     def logo():
         print(__LOGO__)
         logging.info(__LOGO__)
@@ -67,7 +76,8 @@ class Printf(object):
             ["-o or --output",      "download path"],
             ["-l or --link",        "url/id/filePath"],
             ["-q or --quality",     "track quality('Normal','High,'HiFi','Master')"],
-            ["-r or --resolution",  "video resolution('P1080', 'P720', 'P480', 'P360')"]
+            ["-r or --resolution",  "video resolution('P1080', 'P720', 'P480', 'P360')"],
+            ["--listen",            "start HTTP listener mode"]
         ])
         print(tb)
 
@@ -109,6 +119,9 @@ class Printf(object):
             [LANG.select.SETTING_MULITHREAD_DOWNLOAD, data.multiThread],
             [LANG.select.SETTING_APIKEY, f"[{data.apiKeyIndex}]" + apiKey.getItem(data.apiKeyIndex)['formats']],
             [LANG.select.SETTING_DOWNLOAD_DELAY, data.downloadDelay],
+            [LANG.get('SETTING_LISTENER_ENABLED', 'Listener mode enabled'), data.listenerEnabled],
+            [LANG.get('SETTING_LISTENER_PORT', 'Listener port'), data.listenerPort],
+            [LANG.get('SETTING_LISTENER_SECRET', 'Listener secret'), Printf._mask_listener_secret(data.listenerSecret)],
         ])
         print(tb)
 
@@ -124,6 +137,8 @@ class Printf(object):
             [aigpy.cmd.green(LANG.select.CHOICE_ENTER + " '5':"), LANG.select.CHOICE_SETTINGS + '-Quality'],
             [aigpy.cmd.green(LANG.select.CHOICE_ENTER + " '6':"), LANG.select.CHOICE_SETTINGS + '-Else'],
             [aigpy.cmd.green(LANG.select.CHOICE_ENTER + " '7':"), LANG.select.CHOICE_APIKEY],
+            [aigpy.cmd.green(LANG.select.CHOICE_ENTER + " '8':"), LANG.get('CHOICE_PKCE_LOGIN', 'Login via PKCE')],
+            [aigpy.cmd.green(LANG.select.CHOICE_ENTER + " '9':"), LANG.get('CHOICE_LISTENER', 'Start listener mode')],
             [aigpy.cmd.green(LANG.select.CHOICE_ENTER_URLID), LANG.select.CHOICE_DOWNLOAD_BY_URL],
         ])
         tb.set_style(prettytable.PLAIN_COLUMNS)
