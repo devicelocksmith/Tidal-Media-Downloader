@@ -10,6 +10,8 @@
 """
 
 from .download import *
+from .enums import Type
+from .model import Artist, Mix
 
 '''
 =================================
