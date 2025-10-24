@@ -12,6 +12,8 @@ import sys
 import getopt
 import aigpy
 
+from .metadata_refresh import refresh_metadata_for_directory
+
 from .events import *
 from .listener import start_listener
 from .settings import *
@@ -25,7 +27,17 @@ def mainCommand():
         opts, args = getopt.getopt(
             sys.argv[1:],
             "hvgl:o:q:r:",
-            ["help", "version", "gui", "link=", "output=", "quality", "resolution", "listen"],
+            [
+                "help",
+                "version",
+                "gui",
+                "link=",
+                "output=",
+                "quality",
+                "resolution",
+                "listen",
+                "refresh-metadata=",
+            ],
         )
     except getopt.GetoptError as errmsg:
         Printf.err(vars(errmsg)['msg'] + ". Use 'tidal-dl -h' for usage.")
@@ -33,6 +45,7 @@ def mainCommand():
 
     link = None
     showGui = False
+    refresh_path = None
 
     for opt, val in opts:
         if opt in ('-h', '--help'):
@@ -47,6 +60,9 @@ def mainCommand():
         if opt == '--listen':
             start_listener()
             return
+        if opt == '--refresh-metadata':
+            refresh_path = val
+            continue
         if opt in ('-l', '--link'):
             link = val
             continue
@@ -62,6 +78,21 @@ def mainCommand():
             SETTINGS.videoQuality = SETTINGS.getVideoQuality(val)
             SETTINGS.save()
             continue
+
+    if refresh_path is not None:
+        if showGui:
+            Printf.err("Metadata refresh is not available in GUI mode.")
+            return
+        if link is not None:
+            Printf.err("Please provide either a link or --refresh-metadata, not both.")
+            return
+        if not loginByConfig():
+            if apiSupportsPkce():
+                loginByPkce()
+            else:
+                loginByWeb()
+        refresh_metadata_for_directory(refresh_path)
+        return
 
     if not aigpy.path.mkdirs(SETTINGS.downloadPath):
         Printf.err(LANG.select.MSG_PATH_ERR + SETTINGS.downloadPath)

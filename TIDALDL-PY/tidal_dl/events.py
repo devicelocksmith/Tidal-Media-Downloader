@@ -417,6 +417,14 @@ def changeSettings():
     SETTINGS.multiThread = Printf.enterBool(LANG.select.CHANGE_MULITHREAD_DOWNLOAD)
     SETTINGS.usePlaylistFolder = Printf.enterBool(LANG.select.SETTING_USE_PLAYLIST_FOLDER + "('0'-No,'1'-Yes):")
     SETTINGS.downloadDelay = Printf.enterBool(LANG.select.CHANGE_USE_DOWNLOAD_DELAY)
+
+    SETTINGS.metadataRefreshDelay = Printf.enterBool(
+        LANG.get(
+            'CHANGE_METADATA_REFRESH_DELAY',
+            "Use metadata refresh delay('0'-No,'1'-Yes):",
+        )
+    )
+
     SETTINGS.listenerEnabled = Printf.enterBool(
         LANG.get('CHANGE_ENABLE_LISTENER', "Enable listener mode('0'-No,'1'-Yes):")
     )

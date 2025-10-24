@@ -41,6 +41,7 @@ class Settings(aigpy.model.ModelBase):
     customPkceTokenUrl = None
     customPkceRedirectUri = None
     customPkceScope = None
+    metadataRefreshDelay = False
 
     downloadPath = "./download/"
     audioQuality = AudioQuality.Normal
@@ -112,6 +113,12 @@ class Settings(aigpy.model.ModelBase):
                 self.customSupportsPkce = False
             else:
                 self.customSupportsPkce = None
+
+        delay_raw = getattr(self, 'metadataRefreshDelay', False)
+        if isinstance(delay_raw, (int, float)):
+            self.metadataRefreshDelay = delay_raw > 0
+        else:
+            self.metadataRefreshDelay = bool(delay_raw)
 
         LANG.setLang(self.language)
 
