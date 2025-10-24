@@ -15,6 +15,7 @@ import aigpy
 from .events import *
 from .listener import start_listener
 from .settings import *
+from .paths import getProfilePath, getTokenPath
 from .gui import startGui
 from .printf import Printf
 
