@@ -34,12 +34,15 @@ def __getDurationStr__(seconds):
 
 
 def __getExtension__(stream: StreamUrl):
-    if '.flac' in stream.url:
+    url = (stream.url or '').lower()
+    codec = (stream.codec or '').lower()
+
+    if '.flac' in url:
         return '.flac'
-    if '.mp4' in stream.url:
-        if 'ac4' in stream.codec or 'mha1' in stream.codec:
+    if '.mp4' in url:
+        if 'ac4' in codec or 'mha1' in codec:
             return '.mp4'
-        elif 'flac' in stream.codec:
+        elif 'flac' in codec:
             return '.flac'
         return '.m4a'
     return '.m4a'
