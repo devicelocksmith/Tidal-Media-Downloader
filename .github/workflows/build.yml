@@ -19,10 +19,10 @@ jobs:
     - name: Install dependencies
       shell: bash
       run: |
-        pip3 install wheel
-        pip3 install pyinstaller
-        pip3 install PyQt5
-        pip3 install -r requirements.txt --upgrade
+        pip3 install --break-system-packages wheel
+        pip3 install --break-system-packages pyinstaller
+        pip3 install --break-system-packages PyQt5
+        pip3 install --break-system-packages -r requirements.txt --upgrade
       working-directory: TIDALDL-PY
 
     - name: Clean directory
