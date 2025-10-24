@@ -87,6 +87,8 @@ tidal-dl --listen
 
 The listener binds to `127.0.0.1` on port `8123` by default and requires POST requests to `/run` or `/run_sync` to include the `X-Auth` header set to your configured secret. You can change both the port and secret from the settings menu. When a request arrives the downloader attempts the current quality first and retries once at HiFi if the initial download fails.
 
+If your automation already has a valid bearer token you can pass it either as an `Authorization: Bearer <token>` header or in the JSON payload as `{"bearerAuthorization": "<token>"}` and the listener will reuse it for that download, falling back to the stored login afterwards.
+
 Log output is appended to `listener.log` inside your download directory so you can audit activity initiated via the listener.
 
 ## Settings - Possible Tags
