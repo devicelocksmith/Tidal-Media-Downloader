@@ -36,4 +36,4 @@
   * `/run` – `{ "status": "started" }` once the download attempt is queued in the background.
   * `/run_sync` – `{ "status": "finished", "final_code": <0|1>, "codec": "<STREAM CODEC>", "title": "<TRACK TITLE>" }` after the attempt (including the HiFi retry) completes.
 
-Log output for listener-mode requests is appended to `listener.log` inside your download directory.
+Log output for listener-mode requests is appended to `~/tidal-dl-listener.txt` in the home directory.

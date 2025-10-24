@@ -102,7 +102,7 @@ See [docs/http-endpoints.md](docs/http-endpoints.md) for detailed information on
 
 If your automation already has a valid bearer token you can pass it either as an `Authorization: Bearer <token>` header or in the JSON payload as `{"bearerAuthorization": "<token>"}` and the listener will reuse it for that download, falling back to the stored login afterwards.
 
-Log output is appended to `listener.log` inside your download directory so you can audit activity initiated via the listener.
+Log output is appended to `~/tidal-dl-listener.txt` so you can audit activity initiated via the listener.
 
 ## Settings - Possible Tags
 
