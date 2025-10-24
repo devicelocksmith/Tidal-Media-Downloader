@@ -1,4 +1,8 @@
 <br>
+This is a personal fork. Some features I don't use may not work. Feel free to use it, but I’m not accepting feature requests.
+
+
+<br>
     <a href="https://github.com/yaronzz/Tidal-Media-Downloader-PRO">[GUI-REPOSITORY]</a>
 <br>
 
@@ -186,3 +190,4 @@ pip3 uninstall tidal-dl
 pip3 install -r requirements.txt --user
 python3 setup.py install
 ```
+
