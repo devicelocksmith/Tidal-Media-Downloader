@@ -319,26 +319,24 @@ def _update_flac_metadata(
     if album is not None:
         set_tag("TIDAL_ALBUM_ID", album.id)
         set_tag("TIDAL_ALBUM_VERSION", album.version)
-        set_tag("TIDAL_ALBUM_UPC", getattr(album, "upc", None))
+        set_tag("BARCODE", getattr(album, "upc", None))
         set_tag("TIDAL_ALBUM_POPULARITY", getattr(album, "popularity", None))
-        set_tag("TIDAL_ALBUM_RELEASE_DATE", album.releaseDate)
+        set_tag("DATE", album.releaseDate)
         set_tag("TIDAL_ALBUM_STREAM_START_DATE", getattr(album, "streamStartDate", None))
-        set_tag("TIDAL_ALBUM_COPYRIGHT", getattr(album, "copyright", None))
         set_tag("TIDAL_ALBUM_AUDIO_QUALITY", getattr(album, "audioQuality", None))
         set_tag("TIDAL_ALBUM_AUDIO_MODES", getattr(album, "audioModes", None) or [])
 
     if stream is not None:
-        set_tag("TIDAL_STREAM_URL", stream.url or (stream.urls[0] if stream.urls else None))
-        set_tag("TIDAL_STREAM_CODEC", stream.codec)
+        set_tag("CODEC", stream.codec)
         set_tag("TIDAL_STREAM_SOUND_QUALITY", stream.soundQuality)
-        set_tag("TIDAL_STREAM_BIT_DEPTH", stream.bitDepth)
-        set_tag("TIDAL_STREAM_SAMPLE_RATE", stream.sampleRate)
+        set_tag("BITS_PER_SAMPLE", stream.bitDepth)
+        set_tag("SAMPLERATE", stream.sampleRate)
 
     if track.trackNumberOnPlaylist:
         set_tag("TIDAL_PLAYLIST_TRACK_NUMBER", track.trackNumberOnPlaylist)
 
-    if track.copyRight:
-        set_tag("TIDAL_TRACK_COPYRIGHT", track.copyRight)
+    copyright_text = track.copyRight or (getattr(album, "copyright", None) if album else None)
+    set_tag("COPYRIGHT", copyright_text)
 
     contributor_roles = _collect_contributor_roles(contributors)
     for role_key, names in contributor_roles.items():
@@ -347,9 +345,9 @@ def _update_flac_metadata(
         all_names = [name for names in contributor_roles.values() for name in names]
         set_tag("TIDAL_CREDITS", all_names)
 
-    set_tag("TIDAL_LISTEN_URL", f"https://listen.tidal.com/track/{track.id}")
+    set_tag("URL", f"https://listen.tidal.com/track/{track.id}")
     if album is not None and album.id is not None:
-        set_tag("TIDAL_ALBUM_URL", f"https://listen.tidal.com/album/{album.id}")
+        set_tag("URL_OFFICIAL_RELEASE_SITE", f"https://listen.tidal.com/album/{album.id}")
 
     try:
         audio.save()
