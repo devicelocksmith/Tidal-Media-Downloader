@@ -19,10 +19,18 @@ jobs:
     - name: Install dependencies
       shell: bash
       run: |
-        pip3 install wheel
-        pip3 install pyinstaller
-        pip3 install PyQt5
-        pip3 install -r requirements.txt --upgrade
+        install() {
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            pip3 install --break-system-packages "$@"
+          else
+            pip3 install "$@"
+          fi
+        }
+
+        install wheel
+        install pyinstaller
+        install PyQt5
+        install -r requirements.txt --upgrade
       working-directory: TIDALDL-PY
 
     - name: Clean directory
@@ -66,8 +74,8 @@ jobs:
     #     rm -rf tidal-gui
     #   working-directory: TIDALDL-PY/dist
       
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
       with: 
         name: tidal-dl-${{ runner.os }}
         path: |

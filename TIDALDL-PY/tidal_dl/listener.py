@@ -13,12 +13,12 @@ from typing import Optional
 
 from flask import Flask, abort, jsonify, request
 
-from download import downloadCover, downloadTrack
-from enums import AudioQuality, Type
-from events import loginByConfig
-from printf import Printf
-from settings import SETTINGS
-from tidal import TIDAL_API
+from .download import downloadCover, downloadTrack
+from .enums import AudioQuality, Type
+from .events import loginByConfig
+from .printf import Printf
+from .settings import SETTINGS
+from .tidal import TIDAL_API
 
 LOG = logging.getLogger(__name__)
 
