@@ -19,7 +19,7 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, Callable, Iterable, Optional, Tuple
+from typing import Any, Callable, Dict, Iterable, Optional, Tuple
 
 import aigpy
 import requests
@@ -42,6 +42,7 @@ except Exception:  # pragma: no cover - optional dependency
 
 _FFMPEG_AVAILABLE: Optional[bool] = None
 _PYAV_AVAILABLE: Optional[bool] = None
+_ALBUM_COVER_CACHE: Dict[str, bytes] = {}
 
 
 def __isSkip__(finalpath: str, url: str) -> bool:
@@ -355,6 +356,31 @@ def _update_flac_metadata(
         logging.debug("Unable to save extended metadata for %s: %s", filepath, exc)
 
 
+def _download_cover_bytes(url: str, album: Optional[Album]) -> Optional[bytes]:
+    album_id = getattr(album, "id", "unknown")
+    try:
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+    except Exception:
+        logging.debug(
+            "Failed to download cover art for album %s from %s",
+            album_id,
+            url,
+            exc_info=True,
+        )
+        return None
+
+    if not response.content:
+        logging.debug(
+            "Cover art download for album %s returned empty content from %s",
+            album_id,
+            url,
+        )
+        return None
+
+    return response.content
+
+
 def _make_cover_fetcher(album: Optional[Album]) -> Optional[Callable[[Path], Optional[Path]]]:
     if album is None:
         return None
@@ -362,23 +388,31 @@ def _make_cover_fetcher(album: Optional[Album]) -> Optional[Callable[[Path], Opt
     if aigpy.string.isNull(cover_id):
         return None
 
+    url = TIDAL_API.getCoverUrl(cover_id, "1280", "1280")
+    cache_key = str(cover_id)
+    cover_bytes = _ALBUM_COVER_CACHE.get(cache_key)
+
     def _fetch(tmp_path: Path) -> Optional[Path]:
-        url = TIDAL_API.getCoverUrl(cover_id, "1280", "1280")
+        nonlocal cover_bytes
         destination = tmp_path / "fallback_cover.jpg"
+
+        if cover_bytes is None:
+            cover_bytes = _download_cover_bytes(url, album)
+            if cover_bytes is None:
+                return None
+            _ALBUM_COVER_CACHE[cache_key] = cover_bytes
+
         try:
-            aigpy.net.downloadFile(url, str(destination))
-        except Exception:
+            destination.write_bytes(cover_bytes)
+        except OSError:
             logging.debug(
-                "Failed to download fallback cover art for album %s from %s",
+                "Failed to materialise cached cover art for album %s",
                 getattr(album, "id", "unknown"),
-                url,
                 exc_info=True,
             )
             return None
 
-        if destination.exists() and destination.stat().st_size > 0:
-            return destination
-        return None
+        return destination
 
     return _fetch
 
@@ -436,9 +470,21 @@ def __setMetaData__(
 def downloadCover(album: Optional[Album]) -> None:
     if album is None:
         return
-    path = getAlbumPath(album) + '/cover.jpg'
-    url = TIDAL_API.getCoverUrl(album.cover, "1280", "1280")
-    aigpy.net.downloadFile(url, path)
+
+    cover_id = getattr(album, "cover", None)
+    if aigpy.string.isNull(cover_id):
+        return
+
+    cache_key = str(cover_id)
+    if cache_key in _ALBUM_COVER_CACHE:
+        return
+
+    url = TIDAL_API.getCoverUrl(cover_id, "1280", "1280")
+    cover_bytes = _download_cover_bytes(url, album)
+    if cover_bytes is None:
+        return
+
+    _ALBUM_COVER_CACHE[cache_key] = cover_bytes
 
 
 def downloadAlbumInfo(album: Optional[Album], tracks: Iterable[Track]) -> None:
