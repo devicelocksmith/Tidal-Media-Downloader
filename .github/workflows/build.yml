@@ -66,8 +66,8 @@ jobs:
     #     rm -rf tidal-gui
     #   working-directory: TIDALDL-PY/dist
       
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
       with: 
         name: tidal-dl-${{ runner.os }}
         path: |
