@@ -10,16 +10,16 @@ import os
 import threading
 import time
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Tuple
 
 from flask import Flask, abort, jsonify, request
 
-from download import downloadCover, downloadTrack
-from enums import AudioQuality, Type
-from events import loginByConfig
-from printf import Printf
-from settings import SETTINGS
-from tidal import TIDAL_API
+from .download import downloadCover, downloadTrack
+from .enums import AudioQuality, Type
+from .events import loginByConfig
+from .printf import Printf
+from .settings import SETTINGS
+from .tidal import TIDAL_API
 
 LOG = logging.getLogger(__name__)
 
@@ -170,7 +170,7 @@ def _run_attempts(url: str, bearer_token: Optional[str]) -> DownloadOutcome:
     return _perform_attempt(url, False, bearer_token)
 
 
-def _auth_and_get_request() -> tuple[str, Optional[str]]:
+def _auth_and_get_request() -> Tuple[str, Optional[str]]:
     if request.headers.get("X-Auth") != _get_listener_secret():
         abort(403)
     data = request.get_json(force=True) or {}
