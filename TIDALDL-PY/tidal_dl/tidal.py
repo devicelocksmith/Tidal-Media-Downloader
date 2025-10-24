@@ -16,12 +16,12 @@ import time
 from typing import List
 from urllib.parse import parse_qs, urlencode, urlparse
 
-from . import dash
+from tidal_dl import dash
 
 import requests
 
-from .model import *
-from .settings import *
+from model import *
+from settings import *
 
 # SSL Warnings | retry number
 requests.packages.urllib3.disable_warnings()

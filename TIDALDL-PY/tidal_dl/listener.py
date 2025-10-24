@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import copy
 import logging
 import os
 import threading
@@ -13,12 +14,12 @@ from typing import Optional
 
 from flask import Flask, abort, jsonify, request
 
-from .download import downloadCover, downloadTrack
-from .enums import AudioQuality, Type
-from .events import loginByConfig
-from .printf import Printf
-from .settings import SETTINGS
-from .tidal import TIDAL_API
+from download import downloadCover, downloadTrack
+from enums import AudioQuality, Type
+from events import loginByConfig
+from printf import Printf
+from settings import SETTINGS
+from tidal import TIDAL_API
 
 LOG = logging.getLogger(__name__)
 
@@ -84,16 +85,38 @@ def _log_summary(codec: str, title: str, success: bool, url: str) -> None:
     LOG.info(line)
 
 
-def _download_track(url: str) -> DownloadOutcome:
-    if not loginByConfig():
-        return DownloadOutcome(False, "", "", "Authentication required. Run a login flow first.")
+def _restore_login_state(original_key) -> None:
+    """Replace the API login state with the provided snapshot."""
+
+    if original_key is None:
+        return
+    TIDAL_API.key = original_key
+
+
+def _download_track(url: str, bearer_token: Optional[str]) -> DownloadOutcome:
+    original_key = None
+    if bearer_token:
+        try:
+            original_key = copy.deepcopy(TIDAL_API.key)
+        except Exception:  # pragma: no cover - best-effort snapshot
+            original_key = None
+        try:
+            TIDAL_API.loginByAccessToken(bearer_token)
+        except Exception as exc:
+            _restore_login_state(original_key)
+            return DownloadOutcome(False, "", "", f"Authorization with provided bearer token failed: {exc}")
+    else:
+        if not loginByConfig():
+            return DownloadOutcome(False, "", "", "Authentication required. Run a login flow first.")
 
     try:
         etype, obj = TIDAL_API.getByString(url)
     except Exception as exc:  # pragma: no cover - defensive
+        _restore_login_state(original_key)
         return DownloadOutcome(False, "", "", str(exc))
 
     if etype != Type.Track:
+        _restore_login_state(original_key)
         return DownloadOutcome(False, "", "", "Only track URLs are supported.")
 
     album = None
@@ -117,11 +140,13 @@ def _download_track(url: str) -> DownloadOutcome:
         codec = str(obj.audioQuality)
 
     if ok:
+        _restore_login_state(original_key)
         return DownloadOutcome(True, codec, obj.title)
+    _restore_login_state(original_key)
     return DownloadOutcome(False, codec, obj.title, message)
 
 
-def _perform_attempt(url: str, first_try: bool) -> DownloadOutcome:
+def _perform_attempt(url: str, first_try: bool, bearer_token: Optional[str]) -> DownloadOutcome:
     attempt_label = "primary" if first_try else "fallback"
     _log_attempt_header(url, attempt_label)
 
@@ -129,7 +154,7 @@ def _perform_attempt(url: str, first_try: bool) -> DownloadOutcome:
     try:
         if not first_try and SETTINGS.audioQuality != AudioQuality.HiFi:
             SETTINGS.audioQuality = AudioQuality.HiFi
-        result = _download_track(url)
+        result = _download_track(url, bearer_token)
     finally:
         SETTINGS.audioQuality = original_quality
 
@@ -138,14 +163,14 @@ def _perform_attempt(url: str, first_try: bool) -> DownloadOutcome:
     return result
 
 
-def _run_attempts(url: str) -> DownloadOutcome:
-    result = _perform_attempt(url, True)
+def _run_attempts(url: str, bearer_token: Optional[str]) -> DownloadOutcome:
+    result = _perform_attempt(url, True, bearer_token)
     if result.success:
         return result
-    return _perform_attempt(url, False)
+    return _perform_attempt(url, False, bearer_token)
 
 
-def _auth_and_get_url() -> str:
+def _auth_and_get_request() -> tuple[str, Optional[str]]:
     if request.headers.get("X-Auth") != _get_listener_secret():
         abort(403)
     data = request.get_json(force=True) or {}
@@ -160,7 +185,16 @@ def _auth_and_get_url() -> str:
     )
     if not url.startswith(allowed_prefixes):
         abort(400, "URL must start with https://tidal.com/track")
-    return url
+    bearer = (data.get("bearerAuthorization") or "").strip()
+    if not bearer:
+        bearer = (data.get("bearer_token") or "").strip()
+    if not bearer:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.lower().startswith("bearer "):
+            bearer = auth_header[7:].strip()
+    if bearer:
+        bearer = bearer.strip()
+    return url, bearer or None
 
 
 def _create_app() -> Flask:
@@ -169,7 +203,7 @@ def _create_app() -> Flask:
     @app.after_request
     def add_cors(resp):  # type: ignore[override]
         resp.headers["Access-Control-Allow-Origin"] = "*"
-        resp.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Auth"
+        resp.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Auth, Authorization"
         resp.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
         return resp
 
@@ -177,29 +211,29 @@ def _create_app() -> Flask:
     def options():  # type: ignore[override]
         return ("", 204)
 
-    def _async_runner(url: str) -> None:
+    def _async_runner(url: str, bearer_token: Optional[str]) -> None:
         try:
-            _run_attempts(url)
+            _run_attempts(url, bearer_token)
         except Exception:  # pragma: no cover - defensive
             LOG.exception("Listener download failed for %s", url)
 
     @app.post("/run")
     def run_async():  # type: ignore[override]
-        url = _auth_and_get_url()
+        url, bearer = _auth_and_get_request()
         os.makedirs(SETTINGS.downloadPath, exist_ok=True)
-        threading.Thread(target=_async_runner, args=(url,), daemon=True).start()
+        threading.Thread(target=_async_runner, args=(url, bearer), daemon=True).start()
         return jsonify(status="started")
 
     @app.post("/run_sync")
     def run_sync():  # type: ignore[override]
-        url = _auth_and_get_url()
+        url, bearer = _auth_and_get_request()
         os.makedirs(SETTINGS.downloadPath, exist_ok=True)
 
-        primary = _perform_attempt(url, True)
+        primary = _perform_attempt(url, True, bearer)
         if primary.success:
             return jsonify(status="finished", final_code=0, codec=primary.codec, title=primary.title)
 
-        fallback = _perform_attempt(url, False)
+        fallback = _perform_attempt(url, False, bearer)
         code = 0 if fallback.success else 1
         return jsonify(status="finished", final_code=code, codec=fallback.codec, title=fallback.title)
 

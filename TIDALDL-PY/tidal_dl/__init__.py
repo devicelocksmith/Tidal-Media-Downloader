@@ -12,11 +12,11 @@ import sys
 import getopt
 import aigpy
 
-from .events import *
-from .listener import start_listener
-from .settings import *
-from .gui import startGui
-from .printf import Printf
+from events import *
+from listener import start_listener
+from settings import *
+from gui import startGui
+from printf import Printf
 
 
 def mainCommand():

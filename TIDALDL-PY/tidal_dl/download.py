@@ -11,10 +11,10 @@
 
 from concurrent.futures import ThreadPoolExecutor
 
-from .coverfix import ensure_flac_cover_art
-from .decryption import *
-from .printf import *
-from .tidal import *
+from coverfix import ensure_flac_cover_art
+from decryption import *
+from printf import *
+from tidal import *
 
 
 def __isSkip__(finalpath, url):

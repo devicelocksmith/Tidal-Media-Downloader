@@ -119,9 +119,9 @@ class Printf(object):
             [LANG.select.SETTING_MULITHREAD_DOWNLOAD, data.multiThread],
             [LANG.select.SETTING_APIKEY, f"[{data.apiKeyIndex}]" + apiKey.getItem(data.apiKeyIndex)['formats']],
             [LANG.select.SETTING_DOWNLOAD_DELAY, data.downloadDelay],
-            [LANG.select.SETTING_LISTENER_ENABLED, data.listenerEnabled],
-            [LANG.select.SETTING_LISTENER_PORT, data.listenerPort],
-            [LANG.select.SETTING_LISTENER_SECRET, Printf._mask_listener_secret(data.listenerSecret)],
+            [LANG.get('SETTING_LISTENER_ENABLED', 'Listener mode enabled'), data.listenerEnabled],
+            [LANG.get('SETTING_LISTENER_PORT', 'Listener port'), data.listenerPort],
+            [LANG.get('SETTING_LISTENER_SECRET', 'Listener secret'), Printf._mask_listener_secret(data.listenerSecret)],
         ])
         print(tb)
 
@@ -137,8 +137,8 @@ class Printf(object):
             [aigpy.cmd.green(LANG.select.CHOICE_ENTER + " '5':"), LANG.select.CHOICE_SETTINGS + '-Quality'],
             [aigpy.cmd.green(LANG.select.CHOICE_ENTER + " '6':"), LANG.select.CHOICE_SETTINGS + '-Else'],
             [aigpy.cmd.green(LANG.select.CHOICE_ENTER + " '7':"), LANG.select.CHOICE_APIKEY],
-            [aigpy.cmd.green(LANG.select.CHOICE_ENTER + " '8':"), LANG.select.CHOICE_PKCE_LOGIN],
-            [aigpy.cmd.green(LANG.select.CHOICE_ENTER + " '9':"), LANG.select.CHOICE_LISTENER],
+            [aigpy.cmd.green(LANG.select.CHOICE_ENTER + " '8':"), LANG.get('CHOICE_PKCE_LOGIN', 'Login via PKCE')],
+            [aigpy.cmd.green(LANG.select.CHOICE_ENTER + " '9':"), LANG.get('CHOICE_LISTENER', 'Start listener mode')],
             [aigpy.cmd.green(LANG.select.CHOICE_ENTER_URLID), LANG.select.CHOICE_DOWNLOAD_BY_URL],
         ])
         tb.set_style(prettytable.PLAIN_COLUMNS)

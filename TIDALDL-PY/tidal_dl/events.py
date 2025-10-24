@@ -177,13 +177,15 @@ def changeSettings():
     SETTINGS.multiThread = Printf.enterBool(LANG.select.CHANGE_MULITHREAD_DOWNLOAD)
     SETTINGS.usePlaylistFolder = Printf.enterBool(LANG.select.SETTING_USE_PLAYLIST_FOLDER + "('0'-No,'1'-Yes):")
     SETTINGS.downloadDelay = Printf.enterBool(LANG.select.CHANGE_USE_DOWNLOAD_DELAY)
-    SETTINGS.listenerEnabled = Printf.enterBool(LANG.select.CHANGE_ENABLE_LISTENER)
+    SETTINGS.listenerEnabled = Printf.enterBool(
+        LANG.get('CHANGE_ENABLE_LISTENER', "Enable listener mode('0'-No,'1'-Yes):")
+    )
 
-    secret = Printf.enter(LANG.select.CHANGE_LISTENER_SECRET)
+    secret = Printf.enter(LANG.get('CHANGE_LISTENER_SECRET', "Listener secret('0'-not modify):"))
     if secret != '0' and not aigpy.string.isNull(secret):
         SETTINGS.listenerSecret = secret
 
-    port_value = Printf.enter(LANG.select.CHANGE_LISTENER_PORT)
+    port_value = Printf.enter(LANG.get('CHANGE_LISTENER_PORT', "Listener port('0'-not modify):"))
     if port_value != '0' and not aigpy.string.isNull(port_value):
         try:
             port_int = int(port_value)
