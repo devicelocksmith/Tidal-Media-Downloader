@@ -12,8 +12,8 @@ import importlib
 import sys
 import _thread
 
-from events import *
-from printf import *
+from .events import *
+from .printf import *
 
 
 def enableGui():
