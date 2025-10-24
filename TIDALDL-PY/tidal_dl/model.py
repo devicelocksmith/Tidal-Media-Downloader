@@ -10,6 +10,12 @@
 '''
 import aigpy
 
+class MediaMetadata(aigpy.model.ModelBase):
+    def __init__(self) -> None:
+        super().__init__()
+        self.tags = []
+
+
 class StreamUrl(aigpy.model.ModelBase):
     def __init__(self) -> None:
         super().__init__()
@@ -19,6 +25,8 @@ class StreamUrl(aigpy.model.ModelBase):
         self.codec = None
         self.encryptionKey = None
         self.soundQuality = None
+        self.sampleRate = None
+        self.bitDepth = None
 
 
 class VideoStreamUrl(aigpy.model.ModelBase):
@@ -52,9 +60,15 @@ class Album(aigpy.model.ModelBase):
         self.type = None
         self.version = None
         self.cover = None
+        self.videoCover = None
         self.explicit = False
         self.audioQuality = None
         self.audioModes = None
+        self.upc = None
+        self.popularity = None
+        self.copyright = None
+        self.streamStartDate = None
+        self.mediaMetadata = MediaMetadata()
         self.artist = Artist()
         self.artists = Artist()
 
@@ -85,7 +99,13 @@ class Track(aigpy.model.ModelBase):
         self.isrc = None
         self.explicit = False
         self.audioQuality = None
+        self.audioModes = None
         self.copyRight = None
+        self.replayGain = None
+        self.peak = None
+        self.popularity = None
+        self.streamStartDate = None
+        self.mediaMetadata = MediaMetadata()
         self.artist = Artist()
         self.artists = Artist()
         self.album = Album()

@@ -13,7 +13,17 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Iterable
+from typing import Callable, Iterable, Optional, Tuple
+
+try:
+    import av  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    av = None  # type: ignore
+
+try:
+    from PIL import Image
+except Exception:  # pragma: no cover - optional dependency
+    Image = None  # type: ignore
 
 __all__ = ["ensure_flac_cover_art"]
 
@@ -26,18 +36,40 @@ _COVER_CANDIDATES = [
 ]
 
 _DEPENDENCIES_AVAILABLE: bool | None = None
+_FFMPEG_AVAILABLE: bool | None = None
+_PYAV_AVAILABLE: bool | None = None
+
+
+def _ffmpeg_ready() -> bool:
+    global _FFMPEG_AVAILABLE
+    if _FFMPEG_AVAILABLE is None:
+        _FFMPEG_AVAILABLE = shutil.which("ffmpeg") is not None
+    return bool(_FFMPEG_AVAILABLE)
+
+
+def _pyav_ready() -> bool:
+    global _PYAV_AVAILABLE
+    if _PYAV_AVAILABLE is None:
+        _PYAV_AVAILABLE = av is not None and Image is not None
+        if av is not None and Image is None:
+            logging.debug(
+                "PyAV is available but Pillow is missing; disabling PyAV cover normalisation."
+            )
+    return bool(_PYAV_AVAILABLE)
 
 
 def _dependencies_ready() -> bool:
-    """Return True when both metaflac and ffmpeg are available."""
+    """Return True when metaflac is available and a re-encode backend is present."""
     global _DEPENDENCIES_AVAILABLE
     if _DEPENDENCIES_AVAILABLE is None:
-        _DEPENDENCIES_AVAILABLE = all(
-            shutil.which(tool) is not None for tool in ("metaflac", "ffmpeg")
-        )
-        if not _DEPENDENCIES_AVAILABLE:
+        metaflac_available = shutil.which("metaflac") is not None
+        backend_available = _pyav_ready() or _ffmpeg_ready()
+        _DEPENDENCIES_AVAILABLE = metaflac_available and backend_available
+        if not metaflac_available:
+            logging.debug("Skipping FLAC cover normalisation because 'metaflac' is missing.")
+        elif not backend_available:
             logging.debug(
-                "Skipping FLAC cover normalisation because 'metaflac' or 'ffmpeg' is missing."
+                "Skipping FLAC cover normalisation because neither PyAV nor 'ffmpeg' is available."
             )
     return bool(_DEPENDENCIES_AVAILABLE)
 
@@ -114,7 +146,41 @@ def _find_folder_cover(start_dir: Path) -> Path | None:
     return None
 
 
-def _reencode_to_baseline_jpeg(src_img: Path, out_jpg: Path, max_px: int) -> bool:
+def _reencode_with_pyav(src_img: Path, out_jpg: Path, max_px: int) -> Tuple[bool, str]:
+    if not _pyav_ready():
+        return False, "PyAV backend unavailable"
+
+    assert av is not None  # for type-checkers
+    try:
+        with av.open(str(src_img)) as container:
+            stream = next((s for s in container.streams if s.type == "video"), None)
+            if stream is None:
+                return False, "PyAV could not locate a video stream"
+            frame = next(container.decode(stream), None)
+            if frame is None:
+                return False, "PyAV failed to decode the image frame"
+            image = frame.to_image()
+    except Exception as exc:  # pragma: no cover - PyAV raises many custom errors
+        return False, f"PyAV error: {exc}"
+
+    try:
+        width, height = image.size
+        scale = min(1.0, max_px / max(width, height))
+        if scale < 1.0:
+            new_size = (max(1, int(width * scale)), max(1, int(height * scale)))
+            image = image.resize(new_size, Image.Resampling.LANCZOS if hasattr(Image, "Resampling") else Image.LANCZOS)
+        image = image.convert("RGB")
+        image.save(out_jpg, format="JPEG", quality=85, optimize=True, progressive=False)
+    except Exception as exc:  # pragma: no cover - Pillow specific errors
+        return False, f"PyAV/Pillow error: {exc}"
+
+    return out_jpg.exists() and out_jpg.stat().st_size > 0, "PyAV"
+
+
+def _reencode_with_ffmpeg(src_img: Path, out_jpg: Path, max_px: int) -> Tuple[bool, str]:
+    if not _ffmpeg_ready():
+        return False, "ffmpeg backend unavailable"
+
     scale = "scale='min({0},iw)':'min({0},ih)':force_original_aspect_ratio=decrease".format(max_px)
     cmd = [
         "ffmpeg", "-y", "-v", "error", "-i", str(src_img),
@@ -122,9 +188,21 @@ def _reencode_to_baseline_jpeg(src_img: Path, out_jpg: Path, max_px: int) -> boo
     ]
     try:
         _run(cmd)
-    except subprocess.CalledProcessError:
-        return False
-    return out_jpg.exists() and out_jpg.stat().st_size > 0
+    except subprocess.CalledProcessError as exc:
+        return False, f"ffmpeg exited with code {exc.returncode}"
+    return out_jpg.exists() and out_jpg.stat().st_size > 0, "ffmpeg"
+
+
+def _reencode_to_baseline_jpeg(src_img: Path, out_jpg: Path, max_px: int) -> Tuple[bool, str]:
+    """Re-encode a cover image to a baseline JPEG using PyAV when possible."""
+    backends = (_reencode_with_pyav, _reencode_with_ffmpeg)
+    last_reason = ""
+    for backend in backends:
+        success, detail = backend(src_img, out_jpg, max_px)
+        if success:
+            return True, detail
+        last_reason = detail
+    return False, last_reason or "No available backend"
 
 
 def _import_front_cover(flac_path: Path, jpg_file: Path) -> None:
@@ -132,20 +210,31 @@ def _import_front_cover(flac_path: Path, jpg_file: Path) -> None:
     _run(["metaflac", f"--import-picture-from=3|image/jpeg|||{jpg_file}", str(flac_path)], capture=False)
 
 
-def ensure_flac_cover_art(flac_path: str | Path, *, max_px: int = 1400) -> bool:
+def ensure_flac_cover_art(
+    flac_path: str | Path,
+    *,
+    max_px: int = 1400,
+    report: bool = False,
+    fetch_cover: Optional[Callable[[Path], Optional[Path]]] = None,
+) -> bool | Tuple[bool, str]:
     """Ensure the FLAC file contains a baseline JPEG front cover."""
     path = Path(flac_path)
+    status_message = ""
     if path.suffix.lower() != ".flac" or not path.exists():
-        return False
+        status_message = "Target is not a FLAC file"
+        return (False, status_message) if report else False
 
     if not _dependencies_ready():
-        return False
+        status_message = "Required cover art tools are unavailable"
+        return (False, status_message) if report else False
 
     try:
         if _is_already_good(path, max_px):
-            return True
+            status_message = "Cover art already meets baseline JPEG requirements"
+            return (True, status_message) if report else True
         if _has_metaflac_front_cover(path):
-            return True
+            status_message = "Cover art already present in FLAC metadata"
+            return (True, status_message) if report else True
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
@@ -159,20 +248,36 @@ def ensure_flac_cover_art(flac_path: str | Path, *, max_px: int = 1400) -> bool:
                     extracted = folder_cover
                     have_art = True
 
+            if not have_art and fetch_cover is not None:
+                try:
+                    fetched = fetch_cover(tmp_path)
+                except Exception:  # pragma: no cover - network/IO failures
+                    logging.debug(
+                        "Failed to obtain fallback cover art for %s", path, exc_info=True
+                    )
+                    fetched = None
+                if fetched is not None and fetched.exists() and fetched.stat().st_size > 0:
+                    extracted = fetched
+                    have_art = True
+
             if not have_art:
                 logging.debug("No cover art found for %s", path)
-                return False
+                status_message = "No cover art was found to embed"
+                return (False, status_message) if report else False
 
-            if not _reencode_to_baseline_jpeg(extracted, baseline, max_px):
+            success, backend = _reencode_to_baseline_jpeg(extracted, baseline, max_px)
+            if not success:
                 logging.debug("Failed to re-encode cover art for %s", path)
-                return False
+                status_message = f"Failed to re-encode cover art ({backend})"
+                return (False, status_message) if report else False
 
             _import_front_cover(path, baseline)
-            return True
+            status_message = f"Embedded baseline JPEG cover using {backend}"
+            return (True, status_message) if report else True
     except FileNotFoundError:
-        return False
+        status_message = "metaflac executable was not found"
     except Exception:
         logging.debug("Failed to normalise cover art for %s", path, exc_info=True)
-        return False
+        status_message = "Unexpected error while normalising cover art"
 
-    return False
+    return (False, status_message) if report else False
