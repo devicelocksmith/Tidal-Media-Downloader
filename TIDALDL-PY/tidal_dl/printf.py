@@ -77,7 +77,8 @@ class Printf(object):
             ["-l or --link",        "url/id/filePath"],
             ["-q or --quality",     "track quality('Normal','High,'HiFi','Master')"],
             ["-r or --resolution",  "video resolution('P1080', 'P720', 'P480', 'P360')"],
-            ["--listen",            "start HTTP listener mode"]
+            ["--listen",            "start HTTP listener mode"],
+            ["--refresh-metadata", "refresh FLAC metadata in a directory"]
         ])
         print(tb)
 
@@ -147,6 +148,8 @@ class Printf(object):
             [LANG.get('SETTING_CUSTOM_PKCE_SCOPE', 'Custom PKCE scope'), data.customPkceScope or ''],
             [LANG.get('SETTING_CUSTOM_PKCE_SUPPORTS', 'Override supports PKCE'), data.customSupportsPkce],
             [LANG.select.SETTING_DOWNLOAD_DELAY, data.downloadDelay],
+            [LANG.get('SETTING_METADATA_REFRESH_DELAY', 'Use metadata refresh delay'),
+             data.metadataRefreshDelay],
             [LANG.get('SETTING_LISTENER_ENABLED', 'Listener mode enabled'), data.listenerEnabled],
             [LANG.get('SETTING_LISTENER_PORT', 'Listener port'), data.listenerPort],
             [LANG.get('SETTING_LISTENER_SECRET', 'Listener secret'), Printf._mask_listener_secret(data.listenerSecret)],
