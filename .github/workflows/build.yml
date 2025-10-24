@@ -26,9 +26,13 @@ jobs:
       - name: Install build dependencies
         shell: bash
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip setuptools
           python -m pip install wheel pyinstaller
-          python -m pip install -r requirements.txt --upgrade
+          if [[ "${{ runner.os }}" == "macOS" ]]; then
+            python -m pip install -r requirements-macos-build.txt --upgrade
+          else
+            python -m pip install -r requirements.txt --upgrade
+          fi
         working-directory: TIDALDL-PY
 
       - name: Clean build artifacts

@@ -13,15 +13,15 @@ import hashlib
 import random
 import secrets
 import time
-from typing import List
+from typing import List, Optional
 from urllib.parse import parse_qs, urlencode, urlparse
 
-from tidal_dl import dash
+from . import dash
 
 import requests
 
-from model import *
-from settings import *
+from .model import *
+from .settings import *
 
 # SSL Warnings | retry number
 requests.packages.urllib3.disable_warnings()
@@ -50,50 +50,67 @@ class TidalAPI(object):
         self.apiKey = {'clientId': '7m7Ap0JC9j1cOM3n',
                        'clientSecret': 'vRAdA108tlvkJpTsGZS8rGZ7xTlbJ0qaZ2K9saEzsgY='}
 
-    def __get__(self, path, params={}, urlpre='https://api.tidalhifi.com/v1/'):
-        header = {}
+    def __get__(
+        self,
+        path,
+        params: Optional[dict] = None,
+        urlpre: str = 'https://api.tidalhifi.com/v1/'
+    ):
         header = {'authorization': f'Bearer {self.key.accessToken}'}
-        params['countryCode'] = self.key.countryCode
+        query = dict(params or {})
+        query['countryCode'] = self.key.countryCode
         errmsg = "Get operation err!"
-        for index in range(0, 3):
+        last_exception: Optional[Exception] = None
+        last_response_text: Optional[str] = None
+
+        for attempt in range(3):
+            response = None
             try:
-                respond = requests.get(urlpre + path, headers=header, params=params)
-                if respond.url.find("playbackinfopostpaywall") != -1 and SETTINGS.downloadDelay is not False:
-                    # random sleep between 0.5 and 5 seconds and print it
+                response = requests.get(urlpre + path, headers=header, params=query)
+                if response.url.find("playbackinfopostpaywall") != -1 and SETTINGS.downloadDelay is not False:
                     sleep_time = random.randint(500, 5000) / 1000
                     print(
                         f"Sleeping for {sleep_time} seconds, to mimic human behaviour and prevent too many requests error")
                     time.sleep(sleep_time)
 
-                if respond.status_code == 429:
+                if response.status_code == 429:
                     print('Too many requests, waiting for 20 seconds...')
-                    # Loop countdown 20 seconds and print the remaining time
                     for i in range(20, 0, -1):
                         time.sleep(1)
                         print(i, end=' ')
                     print('')
                     continue
 
-                result = json.loads(respond.text)
+                response.raise_for_status()
+                result = response.json()
                 if 'status' not in result:
                     return result
 
-                if 'userMessage' in result and result['userMessage'] is not None:
+                if result.get('userMessage'):
                     errmsg += result['userMessage']
+                last_response_text = response.text
                 break
-            except Exception as e:
-                if index >= 3:
-                    errmsg += respond.text
+            except Exception as exc:
+                last_exception = exc
+                if response is not None and response.text:
+                    last_response_text = response.text
+
+        if last_response_text:
+            errmsg += last_response_text
+
+        if last_exception is not None:
+            raise Exception(errmsg) from last_exception
 
         raise Exception(errmsg)
 
-    def __getItems__(self, path, params={}):
-        params['limit'] = 50
-        params['offset'] = 0
+    def __getItems__(self, path, params: Optional[dict] = None):
+        query = dict(params or {})
+        query['limit'] = 50
+        query['offset'] = 0
         total = 0
         ret = []
         while True:
-            data = self.__get__(path, params)
+            data = self.__get__(path, query)
             if 'totalNumberOfItems' in data:
                 total = data['totalNumberOfItems']
             if total > 0 and total <= len(ret):
@@ -103,7 +120,7 @@ class TidalAPI(object):
             num = len(data["items"])
             if num < 50:
                 break
-            params['offset'] += num
+            query['offset'] += num
         return ret
 
     def __getResolutionList__(self, url):
