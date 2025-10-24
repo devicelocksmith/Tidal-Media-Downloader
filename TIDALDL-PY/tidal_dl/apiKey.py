@@ -67,8 +67,8 @@ __ERROR_KEY__ = {
     'formats': '',
     'clientId': '',
     'clientSecret': '',
-                    'valid': 'False',
-},
+    'valid': 'False',
+}
 
 
 def getNum():
@@ -83,7 +83,9 @@ def getItem(index: int):
 
 def isItemValid(index: int):
     item = getItem(index)
-    return item['valid'] == 'True'
+    if isinstance(item, dict):
+        return item.get('valid') == 'True'
+    return False
 
 
 def getItems():
