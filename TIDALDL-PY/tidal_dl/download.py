@@ -12,6 +12,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
 
+import errno
 import logging
 import os
 import shutil
@@ -53,9 +54,30 @@ def __isSkip__(finalpath: str, url: str) -> bool:
     return curSize >= netSize
 
 
+def _replace_file(src: str, dest: str) -> None:
+    """Atomically replace *dest* with *src*.
+
+    Falls back to a copy-and-remove strategy when the source and destination
+    reside on different filesystems, mimicking ``os.replace`` semantics.
+    """
+
+    try:
+        os.replace(src, dest)
+    except OSError as exc:  # pragma: no cover - filesystem dependent
+        if exc.errno != errno.EXDEV:
+            raise
+
+        if os.path.exists(dest):
+            if os.path.isdir(dest):
+                raise
+            os.remove(dest)
+
+        shutil.move(src, dest)
+
+
 def __encrypted__(stream: StreamUrl, srcPath: str, descPath: str) -> str:
     if aigpy.string.isNull(stream.encryptionKey):
-        os.replace(srcPath, descPath)
+        _replace_file(srcPath, descPath)
         return descPath
 
     key, nonce = decrypt_security_token(stream.encryptionKey)
@@ -559,10 +581,10 @@ def downloadTrack(
 
             final_tmp_path = os.path.join(tmpdir, f"final{expected_extension}") if expected_extension else processed_path
             if processed_path != final_tmp_path:
-                os.replace(processed_path, final_tmp_path)
+                _replace_file(processed_path, final_tmp_path)
                 processed_path = final_tmp_path
 
-            os.replace(processed_path, path)
+            _replace_file(processed_path, path)
 
         # contributors
         try:
