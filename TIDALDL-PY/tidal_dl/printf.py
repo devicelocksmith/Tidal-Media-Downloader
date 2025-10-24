@@ -22,7 +22,7 @@ from .settings import *
 from .lang.language import *
 
 
-VERSION = '2022.10.31.1'
+VERSION = '2025.10.24'
 __LOGO__ = f'''
  /$$$$$$$$ /$$       /$$           /$$               /$$ /$$
 |__  $$__/|__/      | $$          | $$              | $$| $$
@@ -33,7 +33,7 @@ __LOGO__ = f'''
    | $$   | $$|  $$$$$$$|  $$$$$$$| $$        |  $$$$$$$| $$
    |__/   |__/ \_______/ \_______/|__/         \_______/|__/
 
-       https://github.com/yaronzz/Tidal-Media-Downloader
+       https://github.com/devicelocksmith/Tidal-Media-Downloader
 
                         {VERSION}
 '''
@@ -92,6 +92,26 @@ class Printf(object):
     @staticmethod
     def settings():
         data = SETTINGS
+        api_key_info = apiKey.getItem(data.apiKeyIndex)
+        api_key_formats = ''
+        if isinstance(api_key_info, dict):
+            api_key_formats = api_key_info.get('formats', '')
+        elif hasattr(api_key_info, 'get'):
+            try:
+                api_key_formats = api_key_info.get('formats', '')
+            except TypeError:
+                pass
+        if not api_key_formats and isinstance(api_key_info, (list, tuple)):
+            for item in api_key_info:
+                if isinstance(item, tuple) and len(item) == 2 and item[0] == 'formats':
+                    api_key_formats = item[1]
+                    break
+
+        if api_key_formats is None:
+            api_key_formats = ''
+        else:
+            api_key_formats = str(api_key_formats)
+
         tb = Printf.__gettable__([LANG.select.SETTING, LANG.select.VALUE], [
             #settings - path and format
             [LANG.select.SETTING_PATH, getProfilePath()],
@@ -117,7 +137,7 @@ class Printf(object):
             [LANG.select.SETTING_LANGUAGE, LANG.getLangName(data.language)],
             [LANG.select.SETTING_ADD_LRC_FILE, data.lyricFile],
             [LANG.select.SETTING_MULITHREAD_DOWNLOAD, data.multiThread],
-            [LANG.select.SETTING_APIKEY, f"[{data.apiKeyIndex}]" + apiKey.getItem(data.apiKeyIndex)['formats']],
+            [LANG.select.SETTING_APIKEY, f"[{data.apiKeyIndex}]" + api_key_formats],
             [LANG.select.SETTING_DOWNLOAD_DELAY, data.downloadDelay],
             [LANG.get('SETTING_LISTENER_ENABLED', 'Listener mode enabled'), data.listenerEnabled],
             [LANG.get('SETTING_LISTENER_PORT', 'Listener port'), data.listenerPort],
