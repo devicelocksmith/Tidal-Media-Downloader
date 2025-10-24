@@ -151,6 +151,20 @@ def _create_pkce_handler(result_queue: "queue.Queue[str]", stop_event: threading
     return _PkceHandler
 
 
+def _resolve_listener_port() -> int:
+    """Return the configured listener port with validation."""
+
+    port = SETTINGS.listenerPort or 8123
+    try:
+        port = int(port)
+    except (TypeError, ValueError):
+        return 8123
+
+    if port <= 0 or port > 65535:
+        return 8123
+    return port
+
+
 def _start_pkce_server(result_queue: "queue.Queue[str]"):
     stop_event = threading.Event()
     ready_event = threading.Event()
@@ -158,10 +172,12 @@ def _start_pkce_server(result_queue: "queue.Queue[str]"):
 
     def _run():
         handler = _create_pkce_handler(result_queue, stop_event)
+        port = _resolve_listener_port()
         try:
-            httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+            httpd = http.server.ThreadingHTTPServer(("127.0.0.1", port), handler)
         except Exception as exc:  # pragma: no cover - network failures
             server_info["error"] = exc
+            server_info["port"] = port
             ready_event.set()
             return
 
