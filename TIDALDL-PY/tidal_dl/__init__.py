@@ -12,6 +12,13 @@ import sys
 import getopt
 import aigpy
 
+if __package__ in (None, ""):
+    from pathlib import Path
+
+    _module_path = Path(__file__).resolve().parent
+    sys.path.insert(0, str(_module_path.parent))
+    __package__ = _module_path.name
+
 from .metadata_refresh import refresh_metadata_for_directory
 
 from .events import *
