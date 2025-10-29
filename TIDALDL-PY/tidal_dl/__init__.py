@@ -36,13 +36,26 @@ if __package__ in (None, "", "__main__"):
     # the package search path) explicitly we keep the import machinery focused
     # on the extracted package contents bundled with the executable.
     module = sys.modules.setdefault(__package__, sys.modules[__name__])
-    module.__path__ = [str(_module_path)]
+    search_locations = list(getattr(module, "__path__", []))
+    if __spec__ is not None and getattr(__spec__, "submodule_search_locations", None):
+        search_locations.extend(str(entry) for entry in __spec__.submodule_search_locations)
+    if getattr(sys, "frozen", False):
+        meipass = Path(getattr(sys, "_MEIPASS", "")).joinpath("tidal_dl")
+        search_locations.append(str(meipass))
+    else:
+        search_locations.append(str(_module_path))
+    module.__path__ = list(dict.fromkeys(search_locations))
     if __spec__ is None:
         __spec__ = importlib.util.spec_from_loader(
             __package__, loader=None, origin=str(_module_path / "__init__.py"), is_package=True
         )
 
-from .metadata_refresh import refresh_metadata_for_directory
+# Importing ``tidal_dl.metadata_refresh`` using an absolute name ensures that
+# PyInstaller can discover the module when it analyses ``__init__`` as the
+# entry-point script.  Relying purely on a relative import caused the module to
+# be omitted from the frozen bundle which then crashed at runtime when the
+# metadata refresh CLI flag was used.
+from tidal_dl.metadata_refresh import refresh_metadata_for_directory
 
 from .events import *
 from .listener import start_listener
