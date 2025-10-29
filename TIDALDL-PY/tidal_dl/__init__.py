@@ -14,6 +14,7 @@ import aigpy
 
 if __package__ in (None, "", "__main__"):
     from pathlib import Path
+    import importlib.util
 
     _module_path = Path(__file__).resolve().parent
     sys.path.insert(0, str(_module_path))
@@ -26,6 +27,20 @@ if __package__ in (None, "", "__main__"):
     # the expected package name to ensure the relative imports keep working
     # both for source runs and frozen executables.
     __package__ = "tidal_dl"
+
+    # Register the currently executing module as the ``tidal_dl`` package so
+    # that subsequent relative imports do not try to locate a separate
+    # top-level package when running from a frozen executable.  PyInstaller
+    # executes ``__init__`` as ``__main__`` which means the package is not
+    # automatically available in ``sys.modules``.  By exposing the module (and
+    # the package search path) explicitly we keep the import machinery focused
+    # on the extracted package contents bundled with the executable.
+    module = sys.modules.setdefault(__package__, sys.modules[__name__])
+    module.__path__ = [str(_module_path)]
+    if __spec__ is None:
+        __spec__ = importlib.util.spec_from_loader(
+            __package__, loader=None, origin=str(_module_path / "__init__.py"), is_package=True
+        )
 
 from .metadata_refresh import refresh_metadata_for_directory
 
