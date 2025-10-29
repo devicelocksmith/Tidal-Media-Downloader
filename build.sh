@@ -11,7 +11,9 @@ rm -rf MANIFEST.in
 rm -rf *.egg-info
 
 python setup.py sdist bdist_wheel
-pyinstaller -F tidal_dl/__init__.py
+# Explicitly include the ``metadata_refresh`` helper so the frozen executable
+# continues to support the ``--refresh-metadata`` flag.
+pyinstaller -F --hidden-import tidal_dl.metadata_refresh tidal_dl/__init__.py
 mkdir exe
 mv dist/__init__.exe exe/tidal-dl.exe
 
