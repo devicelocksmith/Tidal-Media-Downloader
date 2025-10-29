@@ -12,12 +12,20 @@ import sys
 import getopt
 import aigpy
 
-if __package__ in (None, ""):
+if __package__ in (None, "", "__main__"):
     from pathlib import Path
 
     _module_path = Path(__file__).resolve().parent
+    sys.path.insert(0, str(_module_path))
     sys.path.insert(0, str(_module_path.parent))
-    __package__ = _module_path.name
+    # When the application is frozen with PyInstaller the temporary
+    # extraction directory is named ``_MEIxxxxx``.  If we blindly use that
+    # directory name as ``__package__`` then relative imports such as
+    # ``from .metadata_refresh`` try to resolve against the temporary
+    # directory instead of the actual ``tidal_dl`` package.  Explicitly set
+    # the expected package name to ensure the relative imports keep working
+    # both for source runs and frozen executables.
+    __package__ = "tidal_dl"
 
 from .metadata_refresh import refresh_metadata_for_directory
 
