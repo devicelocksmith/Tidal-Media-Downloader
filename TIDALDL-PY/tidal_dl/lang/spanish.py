@@ -104,6 +104,17 @@ class LangSpanish(object):
     CHANGE_LISTENER_SECRET = "Listener secret('0'-not modify):"
     CHANGE_LISTENER_PORT = "Listener port('0'-not modify):"
 
+    CUSTOM_API_OVERRIDES_INFO = "Déjalo en blanco para mantener el valor actual. Introduce '0' para borrar una anulación (establecerla en null). Los inicios de sesión PKCE no requieren un secreto de cliente y la URL de token PKCE es opcional: configúrala solo si tu proveedor usa un extremo de token diferente al predeterminado (las credenciales a largo plazo usan el predeterminado)."
+    CUSTOM_PROMPT_CLIENT_ID = "Sobrescritura personalizada del ID de cliente (actual: {current}) ('0'-borrar):"
+    CUSTOM_PROMPT_CLIENT_SECRET = "Sobrescritura personalizada del secreto de cliente (no se requiere para PKCE; introduce '0' para borrar/establecer null) (actual: {current}):"
+    CUSTOM_PROMPT_PKCE_AUTHORIZE_URL = "URL de autorización PKCE personalizada (actual: {current}) ('0'-borrar):"
+    CUSTOM_PROMPT_PKCE_TOKEN_URL = "URL de token PKCE personalizada (opcional; configúrala solo si tu proveedor usa un extremo de token no predeterminado—las credenciales de largo plazo usan el predeterminado) (actual: {current}) ('0'-borrar):"
+    CUSTOM_PROMPT_PKCE_REDIRECT_URL = "URL de redirección PKCE personalizada (actual: {current}) ('0'-borrar):"
+    CUSTOM_PROMPT_PKCE_SCOPE = "Alcance PKCE personalizado (actual: {current}) ('0'-borrar):"
+    CUSTOM_PROMPT_PKCE_SUPPORTS = "Forzar compatibilidad PKCE personalizada (actual: {current}) ('0'-borrar,'1'-forzar habilitar,'2'-forzar deshabilitar):"
+    CUSTOM_API_OVERRIDES_SAVED = "Anulaciones de API personalizadas guardadas."
+    CUSTOM_VALUE_UNSET = "sin establecer"
+
     # {} are required in these strings
     AUTH_START_LOGIN = "Iniciando sesión..."
     AUTH_LOGIN_CODE = "Su código para autorizar la sesión es {}"

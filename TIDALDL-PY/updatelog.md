@@ -1,6 +1,12 @@
 TYPE tidal-dl
 USE  pip3 install tidal-dl --upgrade
 
+#### v2025-11-21
+
+- [X] Clarify custom API override prompts for PKCE and long-term credential flows, including how to clear values.
+- [X] Refresh README download and actions links to the devicelocksmith fork.
+- [X] Bump version metadata to the current release date.
+
 #### v2025-10-24
 
 - [X] Add DASH manifest parser to support python-tidal dash+xml playback

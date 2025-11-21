@@ -104,6 +104,17 @@ class LangPortuguese(object):
     CHANGE_LISTENER_SECRET = "Listener secret('0'-not modify):"
     CHANGE_LISTENER_PORT = "Listener port('0'-not modify):"
 
+    CUSTOM_API_OVERRIDES_INFO = "Deixe em branco para manter o valor atual. Insira '0' para limpar uma substituição (definir como nula). Logins PKCE não exigem um segredo do cliente e o URL de token PKCE é opcional — defina-o apenas se seu provedor usar um endpoint de token diferente do padrão (credenciais de longo prazo também usam o padrão)."
+    CUSTOM_PROMPT_CLIENT_ID = "Substituição personalizada do ID do cliente (atual: {current}) ('0'-limpar):"
+    CUSTOM_PROMPT_CLIENT_SECRET = "Substituição personalizada do segredo do cliente (não é necessário para PKCE; insira '0' para limpar/definir como nulo) (atual: {current}):"
+    CUSTOM_PROMPT_PKCE_AUTHORIZE_URL = "URL de autorização PKCE personalizada (atual: {current}) ('0'-limpar):"
+    CUSTOM_PROMPT_PKCE_TOKEN_URL = "URL de token PKCE personalizada (opcional; defina apenas se seu provedor usar um endpoint de token não padrão — credenciais de longo prazo usam o padrão) (atual: {current}) ('0'-limpar):"
+    CUSTOM_PROMPT_PKCE_REDIRECT_URL = "URL de redirecionamento PKCE personalizada (atual: {current}) ('0'-limpar):"
+    CUSTOM_PROMPT_PKCE_SCOPE = "Escopo PKCE personalizado (atual: {current}) ('0'-limpar):"
+    CUSTOM_PROMPT_PKCE_SUPPORTS = "Forçar compatibilidade PKCE personalizada (atual: {current}) ('0'-limpar,'1'-forçar ativar,'2'-forçar desativar):"
+    CUSTOM_API_OVERRIDES_SAVED = "Substituições personalizadas de API salvas."
+    CUSTOM_VALUE_UNSET = "não definido"
+
     # {} are required in these strings
     AUTH_START_LOGIN = "Iniciando o processo de login..."
     AUTH_LOGIN_CODE = "Seu código de login é {}"

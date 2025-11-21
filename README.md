@@ -14,26 +14,26 @@ This is a personal fork. Some features I don't use may not work. Feel free to us
   <a href="https://github.com/yaronzz/Tidal-Media-Downloader/blob/master/LICENSE">
     <img src="https://img.shields.io/github/license/yaronzz/Tidal-Media-Downloader.svg?style=flat-square" alt="">
   </a>
-  <a href="https://github.com/yaronzz/Tidal-Media-Downloader/releases">
-    <img src="https://img.shields.io/github/v/release/yaronzz/Tidal-Media-Downloader.svg?style=flat-square" alt="">
+  <a href="https://github.com/devicelocksmith/Tidal-Media-Downloader/releases">
+    <img src="https://img.shields.io/github/v/release/devicelocksmith/Tidal-Media-Downloader.svg?style=flat-square" alt="">
   </a>
   <a href="https://www.python.org/">
     <img src="https://img.shields.io/github/issues/yaronzz/Tidal-Media-Downloader.svg?style=flat-square" alt="">
   </a>
-  <a href="https://github.com/yaronzz/Tidal-Media-Downloader">
-    <img src="https://img.shields.io/github/downloads/yaronzz/Tidal-Media-Downloader/total?label=tidal-gui%20download" alt="">
+  <a href="https://github.com/devicelocksmith/Tidal-Media-Downloader/releases">
+    <img src="https://img.shields.io/github/downloads/devicelocksmith/Tidal-Media-Downloader/total?label=tidal-gui%20download" alt="">
   </a>
   <a href="https://pypi.org/project/tidal-dl/">
     <img src="https://img.shields.io/pypi/dm/tidal-dl?label=tidal-dl%20download" alt="">
   </a>
-  <a href="https://github.com/yaronzz/Tidal-Media-Downloader/actions/workflows/build.yml">
-    <img src="https://github.com/yaronzz/Tidal-Media-Downloader/actions/workflows/build.yml/badge.svg" alt="">
+  <a href="https://github.com/devicelocksmith/Tidal-Media-Downloader/actions/workflows/build.yml">
+    <img src="https://github.com/devicelocksmith/Tidal-Media-Downloader/actions/workflows/build.yml/badge.svg" alt="">
   </a>
 </div>
 <p align="center">
   «Tidal-Media-Downloader» is an application that lets you download videos and tracks from Tidal. It supports two version: tidal-dl and tidal-gui. (This repository only contains tidal-dl, and the release isn't the newest gui version.)
     <br>
-        <a href="https://github.com/yaronzz/Tidal-Media-Downloader-PRO/releases">Download</a> |
+        <a href="https://github.com/devicelocksmith/Tidal-Media-Downloader/releases">Download</a> |
         <a href="https://doc.yaronzz.com/post/tidal_dl_installation/">Documentation</a> |
         <a href="https://doc.yaronzz.com/post/tidal_dl_installation_chn/">中文文档</a> |
     <br>
@@ -59,8 +59,8 @@ If you are using windows system, you can use [tidal-pro](https://github.com/yaro
 |Download nightly builds from continuous integration: 	| [![Build Status][Build]][Actions] 
 |-------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
 
-[Actions]: https://github.com/yaronzz/Tidal-Media-Downloader/actions
-[Build]: https://github.com/yaronzz/Tidal-Media-Downloader/workflows/Tidal%20Media%20Downloader/badge.svg
+[Actions]: https://github.com/devicelocksmith/Tidal-Media-Downloader/actions
+[Build]: https://github.com/devicelocksmith/Tidal-Media-Downloader/workflows/Tidal%20Media%20Downloader/badge.svg
 
 ## 🤖 Features
 - Download album \ track \ video \ playlist \ artist-albums
@@ -167,7 +167,7 @@ If you really like my projects and want to support me, you can buy me a coffee a
 ## 🎂 Contributors
 This project exists thanks to all the people who contribute. 
 
-<a href="https://github.com/yaronzz/Tidal-Media-Downloader/graphs/contributors"><img src="https://contributors-img.web.app/image?repo=yaronzz/Tidal-Media-Downloader" /></a>
+<a href="https://github.com/devicelocksmith/Tidal-Media-Downloader/graphs/contributors"><img src="https://contributors-img.web.app/image?repo=devicelocksmith/Tidal-Media-Downloader" /></a>
 
 ## 🎨 Libraries and reference
 

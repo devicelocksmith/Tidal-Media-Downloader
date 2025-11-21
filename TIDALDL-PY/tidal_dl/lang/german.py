@@ -105,6 +105,17 @@ class LangGerman(object):
     CHANGE_LISTENER_SECRET = "Listener secret('0'-not modify):"
     CHANGE_LISTENER_PORT = "Listener port('0'-not modify):"
 
+    CUSTOM_API_OVERRIDES_INFO = "Leer lassen, um den aktuellen Wert zu behalten. Gib '0' ein, um eine Überschreibung zu löschen (auf null setzen). PKCE-Anmeldungen benötigen kein Client-Secret, und die PKCE-Token-URL ist optional – setze sie nur, wenn dein Anbieter einen nicht standardmäßigen Token-Endpunkt nutzt (Anmeldungen mit Langzeit-Credentials verwenden ebenfalls den Standard)."
+    CUSTOM_PROMPT_CLIENT_ID = "Benutzerdefinierte Client-ID-Überschreibung (aktuell: {current}) ('0'-löschen):"
+    CUSTOM_PROMPT_CLIENT_SECRET = "Benutzerdefinierte Client-Secret-Überschreibung (für PKCE nicht erforderlich; gib '0' ein, um zu löschen/auf null zu setzen) (aktuell: {current}):"
+    CUSTOM_PROMPT_PKCE_AUTHORIZE_URL = "Benutzerdefinierte PKCE-Autorisierungs-URL (aktuell: {current}) ('0'-löschen):"
+    CUSTOM_PROMPT_PKCE_TOKEN_URL = "Benutzerdefinierte PKCE-Token-URL (optional; nur setzen, wenn dein Anbieter einen nicht standardmäßigen Token-Endpunkt nutzt – Langzeit-Credentials verwenden den Standard) (aktuell: {current}) ('0'-löschen):"
+    CUSTOM_PROMPT_PKCE_REDIRECT_URL = "Benutzerdefinierte PKCE-Redirect-URL (aktuell: {current}) ('0'-löschen):"
+    CUSTOM_PROMPT_PKCE_SCOPE = "Benutzerdefinierter PKCE-Scope (aktuell: {current}) ('0'-löschen):"
+    CUSTOM_PROMPT_PKCE_SUPPORTS = "Benutzerdefinierte PKCE-Unterstützung erzwingen (aktuell: {current}) ('0'-löschen,'1'-erzwingen an,'2'-erzwingen aus):"
+    CUSTOM_API_OVERRIDES_SAVED = "Benutzerdefinierte API-Überschreibungen gespeichert."
+    CUSTOM_VALUE_UNSET = "nicht gesetzt"
+
     # {} are required in these strings
     AUTH_START_LOGIN = "Starte Loginprozess..."
     AUTH_LOGIN_CODE = "Dein Logincode ist {}"
