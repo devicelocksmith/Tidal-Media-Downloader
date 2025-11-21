@@ -94,24 +94,28 @@ class Printf(object):
     def settings():
         data = SETTINGS
         api_key_info = apiKey.getItem(data.apiKeyIndex)
+        using_custom_api = data.has_custom_api_settings()
         api_key_formats = ''
-        if isinstance(api_key_info, dict):
-            api_key_formats = api_key_info.get('formats', '')
-        elif hasattr(api_key_info, 'get'):
-            try:
+        if not using_custom_api:
+            if isinstance(api_key_info, dict):
                 api_key_formats = api_key_info.get('formats', '')
-            except TypeError:
-                pass
-        if not api_key_formats and isinstance(api_key_info, (list, tuple)):
-            for item in api_key_info:
-                if isinstance(item, tuple) and len(item) == 2 and item[0] == 'formats':
-                    api_key_formats = item[1]
-                    break
+            elif hasattr(api_key_info, 'get'):
+                try:
+                    api_key_formats = api_key_info.get('formats', '')
+                except TypeError:
+                    pass
+            if not api_key_formats and isinstance(api_key_info, (list, tuple)):
+                for item in api_key_info:
+                    if isinstance(item, tuple) and len(item) == 2 and item[0] == 'formats':
+                        api_key_formats = item[1]
+                        break
 
-        if api_key_formats is None:
-            api_key_formats = ''
+            if api_key_formats is None:
+                api_key_formats = ''
+            else:
+                api_key_formats = str(api_key_formats)
         else:
-            api_key_formats = str(api_key_formats)
+            api_key_formats = f" {LANG.get('SETTING_APIKEY_CUSTOM', '(Custom credentials; best quality)')}"
 
         tb = Printf.__gettable__([LANG.select.SETTING, LANG.select.VALUE], [
             #settings - path and format
@@ -350,8 +354,15 @@ class Printf(object):
         tb.align = 'l'
 
         for index, item in enumerate(items):
+            if SETTINGS.has_custom_api_settings():
+                formats = SETTINGS.customClientId or LANG.get(
+                    'CUSTOM_CLIENT_ID_UNSET',
+                    '(Custom client ID unset)',
+                )
+            else:
+                formats = item["formats"]
             tb.add_row([str(index),
                         aigpy.cmd.green('True') if item["valid"] == "True" else aigpy.cmd.red('False'),
                         item["platform"],
-                        item["formats"]])
+                        formats])
         print(tb)
