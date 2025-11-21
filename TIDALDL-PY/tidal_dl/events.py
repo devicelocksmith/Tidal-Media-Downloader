@@ -529,7 +529,18 @@ def changeApiKey():
     item = apiKey.getItem(SETTINGS.apiKeyIndex)
     ver = apiKey.getVersion()
 
-    Printf.info(f'Current APIKeys: {str(SETTINGS.apiKeyIndex)} {item["platform"]}-{item["formats"]}')
+    if SETTINGS.has_custom_api_settings():
+        client_id_display = SETTINGS.customClientId or LANG.get(
+            'CUSTOM_CLIENT_ID_UNSET',
+            '(Custom client ID unset)',
+        )
+        Printf.info(
+            f"Current APIKeys: {str(SETTINGS.apiKeyIndex)} {item['platform']} "
+            f"{LANG.get('SETTING_APIKEY_CUSTOM', '(Custom credentials)')} "
+            f"{client_id_display}"
+        )
+    else:
+        Printf.info(f'Current APIKeys: {str(SETTINGS.apiKeyIndex)} {item["platform"]}-{item["formats"]}')
     Printf.info(f'Current Version: {str(ver)}')
     Printf.apikeys(apiKey.getItems())
     index = int(Printf.enterLimit("APIKEY index:", LANG.select.MSG_INPUT_ERR, apiKey.getLimitIndexs()))
