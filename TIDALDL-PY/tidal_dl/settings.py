@@ -129,6 +129,19 @@ class Settings(aigpy.model.ModelBase):
         txt = json.dumps(data)
         aigpy.file.write(self._path_, txt, 'w+')
 
+    def has_custom_api_settings(self) -> bool:
+        return any(
+            (
+                self.customClientId,
+                self.customClientSecret,
+                self.customSupportsPkce is not None,
+                self.customPkceAuthorizeUrl,
+                self.customPkceTokenUrl,
+                self.customPkceRedirectUri,
+                self.customPkceScope,
+            )
+        )
+
     def apply_api_key_overrides(self, api_key: Optional[dict]) -> dict:
         combined = dict(api_key or {})
 

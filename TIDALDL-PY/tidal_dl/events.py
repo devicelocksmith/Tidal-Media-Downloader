@@ -451,8 +451,12 @@ def changeSettings():
 
 def configureCustomApiSettings():
     Printf.settings()
-    Printf.info(LANG.get('CUSTOM_API_OVERRIDES_INFO',
-                         "Leave blank to keep the current value. Enter '0' to clear an override."))
+    Printf.info(
+        LANG.get(
+            'CUSTOM_API_OVERRIDES_INFO',
+            "Leave blank to keep the current value. Enter '0' to clear an override (set it to null). PKCE logins don't require a client secret, and the PKCE token URL override is optional—set it only when your provider uses a non-default token endpoint (long-term credential logins also use the default).",
+        )
+    )
 
     def _prompt(prompt_key, default_prompt, current_value, mask_current=False):
         shown_current = current_value if not mask_current else Printf._mask_listener_secret(current_value)
@@ -473,7 +477,7 @@ def configureCustomApiSettings():
     )
     SETTINGS.customClientSecret = _prompt(
         'CUSTOM_PROMPT_CLIENT_SECRET',
-        "Custom client secret override (current: {current}) ('0'-clear):",
+        "Custom client secret override (not required for PKCE; enter '0' to clear/set null) (current: {current}):",
         SETTINGS.customClientSecret,
         mask_current=True,
     )
@@ -484,7 +488,7 @@ def configureCustomApiSettings():
     )
     SETTINGS.customPkceTokenUrl = _prompt(
         'CUSTOM_PROMPT_PKCE_TOKEN_URL',
-        "Custom PKCE token URL (current: {current}) ('0'-clear):",
+        "Custom PKCE token URL (optional; set only if your provider uses a non-default token endpoint—long-term credentials use the default) (current: {current}) ('0'-clear):",
         SETTINGS.customPkceTokenUrl,
     )
     SETTINGS.customPkceRedirectUri = _prompt(

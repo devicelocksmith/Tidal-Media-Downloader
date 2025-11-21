@@ -104,6 +104,17 @@ class LangFrench(object):
     CHANGE_LISTENER_SECRET = "Listener secret('0'-not modify):"
     CHANGE_LISTENER_PORT = "Listener port('0'-not modify):"
 
+    CUSTOM_API_OVERRIDES_INFO = "Laissez vide pour conserver la valeur actuelle. Entrez '0' pour effacer une substitution (la définir sur null). Les connexions PKCE n'ont pas besoin de secret client et l'URL du jeton PKCE est facultative : ne la définissez que si votre fournisseur utilise un point de terminaison de jeton différent de celui par défaut (les identifiants longue durée utilisent également celui par défaut)."
+    CUSTOM_PROMPT_CLIENT_ID = "Remplacement personnalisé de l'ID client (actuel : {current}) ('0'-effacer) :"
+    CUSTOM_PROMPT_CLIENT_SECRET = "Remplacement personnalisé du secret client (pas requis pour PKCE ; entrez '0' pour effacer/définir sur null) (actuel : {current}) :"
+    CUSTOM_PROMPT_PKCE_AUTHORIZE_URL = "URL d'autorisation PKCE personnalisée (actuel : {current}) ('0'-effacer) :"
+    CUSTOM_PROMPT_PKCE_TOKEN_URL = "URL de jeton PKCE personnalisée (facultatif ; définir uniquement si votre fournisseur utilise un point de terminaison de jeton non par défaut — les identifiants longue durée utilisent celui par défaut) (actuel : {current}) ('0'-effacer) :"
+    CUSTOM_PROMPT_PKCE_REDIRECT_URL = "URL de redirection PKCE personnalisée (actuel : {current}) ('0'-effacer) :"
+    CUSTOM_PROMPT_PKCE_SCOPE = "Portée PKCE personnalisée (actuel : {current}) ('0'-effacer) :"
+    CUSTOM_PROMPT_PKCE_SUPPORTS = "Forcer la prise en charge PKCE personnalisée (actuel : {current}) ('0'-effacer,'1'-forcer l'activation,'2'-forcer la désactivation) :"
+    CUSTOM_API_OVERRIDES_SAVED = "Substitutions d'API personnalisées enregistrées."
+    CUSTOM_VALUE_UNSET = "non défini"
+
     # {} are required in these strings
     AUTH_START_LOGIN = "Démarrage du processus de connexion..."
     AUTH_LOGIN_CODE = "Votre code de connection est le suivant: {}"

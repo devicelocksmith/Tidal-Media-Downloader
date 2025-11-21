@@ -104,6 +104,17 @@ class LangItalian(object):
     CHANGE_LISTENER_SECRET = "Listener secret('0'-not modify):"
     CHANGE_LISTENER_PORT = "Listener port('0'-not modify):"
 
+    CUSTOM_API_OVERRIDES_INFO = "Lascia vuoto per mantenere il valore attuale. Inserisci '0' per cancellare una sostituzione (impostarla su null). I login PKCE non richiedono un client secret e l'URL del token PKCE è facoltativo: impostalo solo se il tuo provider utilizza un endpoint token diverso da quello predefinito (le credenziali a lungo termine usano anch'esse il predefinito)."
+    CUSTOM_PROMPT_CLIENT_ID = "Sovrascrittura personalizzata dell'ID client (attuale: {current}) ('0'-cancella):"
+    CUSTOM_PROMPT_CLIENT_SECRET = "Sovrascrittura personalizzata del client secret (non richiesto per PKCE; inserisci '0' per cancellare/impostare null) (attuale: {current}):"
+    CUSTOM_PROMPT_PKCE_AUTHORIZE_URL = "URL di autorizzazione PKCE personalizzato (attuale: {current}) ('0'-cancella):"
+    CUSTOM_PROMPT_PKCE_TOKEN_URL = "URL del token PKCE personalizzato (opzionale; impostalo solo se il tuo provider usa un endpoint token non predefinito — le credenziali a lungo termine usano quello predefinito) (attuale: {current}) ('0'-cancella):"
+    CUSTOM_PROMPT_PKCE_REDIRECT_URL = "URL di reindirizzamento PKCE personalizzato (attuale: {current}) ('0'-cancella):"
+    CUSTOM_PROMPT_PKCE_SCOPE = "Scope PKCE personalizzato (attuale: {current}) ('0'-cancella):"
+    CUSTOM_PROMPT_PKCE_SUPPORTS = "Forza supporto PKCE personalizzato (attuale: {current}) ('0'-cancella,'1'-forza abilita,'2'-forza disabilita):"
+    CUSTOM_API_OVERRIDES_SAVED = "Sovrascritture API personalizzate salvate."
+    CUSTOM_VALUE_UNSET = "non impostato"
+
     # {} are required in these strings
     AUTH_START_LOGIN = "Starting login process..."
     AUTH_LOGIN_CODE = "Your login code is {}"

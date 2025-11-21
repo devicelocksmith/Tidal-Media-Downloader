@@ -104,6 +104,17 @@ class LangChinese(object):
     CHANGE_LISTENER_SECRET = "Listener secret('0'-not modify):"
     CHANGE_LISTENER_PORT = "Listener port('0'-not modify):"
 
+    CUSTOM_API_OVERRIDES_INFO = "留空以保持当前值。输入'0' 可清除覆盖（设置为 null）。PKCE 登录不需要客户端密钥，PKCE 令牌 URL 为可选——仅当你的提供方使用非默认令牌端点时才需要设置（长期凭据登录也使用默认端点）。"
+    CUSTOM_PROMPT_CLIENT_ID = "自定义客户端 ID 覆盖（当前：{current}）（'0'-清除）："
+    CUSTOM_PROMPT_CLIENT_SECRET = "自定义客户端密钥覆盖（PKCE 不需要；输入'0' 以清除/设为 null）（当前：{current}）："
+    CUSTOM_PROMPT_PKCE_AUTHORIZE_URL = "自定义 PKCE 授权 URL（当前：{current}）（'0'-清除）："
+    CUSTOM_PROMPT_PKCE_TOKEN_URL = "自定义 PKCE 令牌 URL（可选；仅在提供方使用非默认令牌端点时设置——长期凭据使用默认值）（当前：{current}）（'0'-清除）："
+    CUSTOM_PROMPT_PKCE_REDIRECT_URL = "自定义 PKCE 重定向 URL（当前：{current}）（'0'-清除）："
+    CUSTOM_PROMPT_PKCE_SCOPE = "自定义 PKCE scope（当前：{current}）（'0'-清除）："
+    CUSTOM_PROMPT_PKCE_SUPPORTS = "自定义 PKCE 支持标记（当前：{current}）（'0'-清除,'1'-强制开启,'2'-强制关闭）："
+    CUSTOM_API_OVERRIDES_SAVED = "已保存自定义 API 覆盖。"
+    CUSTOM_VALUE_UNSET = "未设置"
+
     # {} are required in these strings
     AUTH_START_LOGIN = "开始启动登录..."
     AUTH_LOGIN_CODE = "你的登录码为: {}"

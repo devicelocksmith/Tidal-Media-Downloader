@@ -104,6 +104,18 @@ class LangTurkish(object):
     CHANGE_LISTENER_SECRET = "Listener secret('0'-not modify):"
     CHANGE_LISTENER_PORT = "Listener port('0'-not modify):"
 
+
+    CUSTOM_API_OVERRIDES_INFO = "Leave blank to keep the current value. Enter '0' to clear an override (set it to null). PKCE logins don't require a client secret, and the PKCE token URL override is optional—set it only when your provider uses a non-default token endpoint (long-term credential logins also use the default)."
+    CUSTOM_PROMPT_CLIENT_ID = "Custom client ID override (current: {current}) ('0'-clear):"
+    CUSTOM_PROMPT_CLIENT_SECRET = "Custom client secret override (not required for PKCE; enter '0' to clear/set null) (current: {current}):"
+    CUSTOM_PROMPT_PKCE_AUTHORIZE_URL = "Custom PKCE authorize URL (current: {current}) ('0'-clear):"
+    CUSTOM_PROMPT_PKCE_TOKEN_URL = "Custom PKCE token URL (optional; set only if your provider uses a non-default token endpoint—long-term credentials use the default) (current: {current}) ('0'-clear):"
+    CUSTOM_PROMPT_PKCE_REDIRECT_URL = "Custom PKCE redirect URL (current: {current}) ('0'-clear):"
+    CUSTOM_PROMPT_PKCE_SCOPE = "Custom PKCE scope (current: {current}) ('0'-clear):"
+    CUSTOM_PROMPT_PKCE_SUPPORTS = "Override PKCE support flag (current: {current}) ('0'-clear,'1'-force enable,'2'-force disable):"
+    CUSTOM_API_OVERRIDES_SAVED = "Custom API overrides saved."
+    CUSTOM_VALUE_UNSET = "not set"
+
     # {} are required in these strings
     AUTH_START_LOGIN = "Giriş işlemleri başlatıldı..."
     AUTH_LOGIN_CODE = "Girmen gereken kod: {}"

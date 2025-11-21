@@ -11,6 +11,7 @@
 import sys
 import getopt
 import aigpy
+from functools import wraps
 
 if __package__ in (None, "", "__main__"):
     from pathlib import Path
@@ -63,6 +64,64 @@ from .settings import *
 from .paths import getProfilePath, getTokenPath
 from .gui import startGui
 from .printf import Printf
+
+
+def _ensure_api_key_configured(interactive: bool) -> bool:
+    """Ensure a usable API key (or custom override) is available.
+
+    When running interactively we only warn so the user can configure
+    custom settings first. Non-interactive invocations return False to
+    signal that execution should stop until configuration is provided.
+    """
+
+    if SETTINGS.has_custom_api_settings() or apiKey.isItemValid(SETTINGS.apiKeyIndex):
+        return True
+
+    if interactive:
+        Printf.info(
+            "No bundled API key selected. Use option 7 to choose one or option 10 to configure custom API settings."
+        )
+    else:
+        Printf.err(
+            "No valid API key configured. Select a bundled key or configure custom API settings before proceeding."
+        )
+    return False
+
+
+def _login_if_needed():
+    if not loginByConfig():
+        if apiSupportsPkce():
+            loginByPkce()
+        else:
+            loginByWeb()
+
+
+def require_api_ready(*, interactive: bool, perform_login: bool = True):
+    """Decorator ensuring an API key (or overrides) exists before proceeding."""
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if not _ensure_api_key_configured(interactive=interactive):
+                return
+            if perform_login:
+                _login_if_needed()
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+@require_api_ready(interactive=False)
+def _perform_metadata_refresh(refresh_path: str):
+    refresh_metadata_for_directory(refresh_path)
+
+
+@require_api_ready(interactive=False)
+def _start_download(link: str):
+    Printf.info(LANG.select.SETTING_DOWNLOAD_PATH + ':' + SETTINGS.downloadPath)
+    start(link)
 
 
 def mainCommand():
@@ -129,12 +188,7 @@ def mainCommand():
         if link is not None:
             Printf.err("Please provide either a link or --refresh-metadata, not both.")
             return
-        if not loginByConfig():
-            if apiSupportsPkce():
-                loginByPkce()
-            else:
-                loginByWeb()
-        refresh_metadata_for_directory(refresh_path)
+        _perform_metadata_refresh(refresh_path)
         return
 
     if not aigpy.path.mkdirs(SETTINGS.downloadPath):
@@ -146,13 +200,7 @@ def mainCommand():
         return
 
     if link is not None:
-        if not loginByConfig():
-            if apiSupportsPkce():
-                loginByPkce()
-            else:
-                loginByWeb()
-        Printf.info(LANG.select.SETTING_DOWNLOAD_PATH + ':' + SETTINGS.downloadPath)
-        start(link)
+        _start_download(link)
 
 def main():
     SETTINGS.read(getProfilePath())
@@ -166,17 +214,8 @@ def main():
     Printf.logo()
     Printf.settings()
 
-    if not apiKey.isItemValid(SETTINGS.apiKeyIndex):
-        changeApiKey()
-        if apiSupportsPkce():
-            loginByPkce()
-        else:
-            loginByWeb()
-    elif not loginByConfig():
-        if apiSupportsPkce():
-            loginByPkce()
-        else:
-            loginByWeb()
+    if _ensure_api_key_configured(interactive=True):
+        _login_if_needed()
 
     Printf.checkVersion()
 
@@ -186,17 +225,23 @@ def main():
         if choice == "0":
             return
         elif choice == "1":
+            if not _ensure_api_key_configured(interactive=True):
+                continue
             if not loginByConfig():
                 if apiSupportsPkce():
                     loginByPkce()
                 else:
                     loginByWeb()
         elif choice == "2":
+            if not _ensure_api_key_configured(interactive=True):
+                continue
             if apiSupportsPkce():
                 loginByPkce()
             else:
                 loginByWeb()
         elif choice == "3":
+            if not _ensure_api_key_configured(interactive=True):
+                continue
             loginByAccessToken()
         elif choice == "4":
             changePathSettings()
@@ -211,12 +256,16 @@ def main():
                 else:
                     loginByWeb()
         elif choice == "8":
+            if not _ensure_api_key_configured(interactive=True):
+                continue
             loginByPkce()
         elif choice == "9":
             start_listener()
         elif choice == "10":
             configureCustomApiSettings()
         else:
+            if not _ensure_api_key_configured(interactive=True):
+                continue
             start(choice)
 
 
